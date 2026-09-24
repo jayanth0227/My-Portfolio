@@ -35,13 +35,13 @@ export interface InteractiveGridBackgroundProps {
 }
 
 export default function InteractiveGridBackground({
-  width: cellWidth = 30,
-  height: cellHeight = 30,
+  width: cellWidth = 44,
+  height: cellHeight = 44,
   x: offsetX = -1,
   y: offsetY = -1,
   strokeDasharray = "4 2",
-  maxDisplacement = 5.5,
-  interactionRadius = 185,
+  maxDisplacement = 4.5,
+  interactionRadius = 180,
   className = "",
   squares,
 }: InteractiveGridBackgroundProps) {
@@ -58,7 +58,8 @@ export default function InteractiveGridBackground({
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    let animationFrameId: number;
+    let animationFrameId: number = 0;
+    let isVisible = true;
     let canvasW = 0;
     let canvasH = 0;
     let dpr = 1;
@@ -87,8 +88,8 @@ export default function InteractiveGridBackground({
     let grid: GridNode[][] = [];
 
     const initGrid = () => {
-      cols = Math.ceil(canvasW / cellWidth) + 3;
-      rows = Math.ceil(canvasH / cellHeight) + 3;
+      cols = Math.ceil(canvasW / cellWidth) + 2;
+      rows = Math.ceil(canvasH / cellHeight) + 2;
       grid = [];
 
       for (let c = 0; c < cols; c++) {
@@ -111,6 +112,12 @@ export default function InteractiveGridBackground({
       }
     };
 
+    // Cache rect to eliminate forced reflows during mouse movement
+    let rect = canvas.getBoundingClientRect();
+    const updateRect = () => {
+      if (canvas) rect = canvas.getBoundingClientRect();
+    };
+
     const handleResize = () => {
       if (!canvas) return;
       dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -124,13 +131,14 @@ export default function InteractiveGridBackground({
 
       ctx.scale(dpr, dpr);
       initGrid();
+      updateRect();
     };
 
     handleResize();
     window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", updateRect, { passive: true });
 
     const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
       const clientX = e.clientX - rect.left;
       const clientY = e.clientY - rect.top;
 
@@ -195,7 +203,7 @@ export default function InteractiveGridBackground({
 
       // 1. Neon Spotlight Glow matching Hero section
       if (mouse.isInside && mouse.x > -500 && mouse.y > -500) {
-        const glowRadius = 240;
+        const glowRadius = 220;
         const glowGrad = ctx.createRadialGradient(
           mouse.x,
           mouse.y,
@@ -204,9 +212,9 @@ export default function InteractiveGridBackground({
           mouse.y,
           glowRadius
         );
-        glowGrad.addColorStop(0, "rgba(254, 240, 138, 0.45)");
-        glowGrad.addColorStop(0.25, "rgba(250, 204, 21, 0.25)");
-        glowGrad.addColorStop(0.55, "rgba(234, 179, 8, 0.10)");
+        glowGrad.addColorStop(0, "rgba(254, 240, 138, 0.42)");
+        glowGrad.addColorStop(0.3, "rgba(250, 204, 21, 0.22)");
+        glowGrad.addColorStop(0.6, "rgba(234, 179, 8, 0.08)");
         glowGrad.addColorStop(1, "rgba(234, 179, 8, 0)");
 
         ctx.save();
@@ -219,14 +227,14 @@ export default function InteractiveGridBackground({
 
       const timeSec = now * 0.001;
 
-      // Update node physics
+      // Update node physics with spatial distance pruning
       for (let c = 0; c < cols; c++) {
         for (let r = 0; r < rows; r++) {
           const node = grid[c][r];
 
           if (!prefersReducedMotion) {
-            const ambientX = Math.sin(timeSec * 0.7 + node.phase) * 0.4;
-            const ambientY = Math.cos(timeSec * 0.5 + node.phase) * 0.4;
+            const ambientX = Math.sin(timeSec * 0.6 + node.phase) * 0.35;
+            const ambientY = Math.cos(timeSec * 0.4 + node.phase) * 0.35;
 
             let targetOffsetX = 0;
             let targetOffsetY = 0;
@@ -235,28 +243,24 @@ export default function InteractiveGridBackground({
             if (mouse.x > -1000 && mouse.y > -1000) {
               const dx = node.originX - mouse.x;
               const dy = node.originY - mouse.y;
-              const dist = Math.sqrt(dx * dx + dy * dy);
 
-              if (dist < interactionRadius && dist > 0.1) {
-                const norm = dist / interactionRadius;
-                const falloff = (1 - norm) * (1 - norm);
-                const shift = falloff * maxDisplacement;
+              // Fast bounding box prune before square root
+              if (Math.abs(dx) < interactionRadius && Math.abs(dy) < interactionRadius) {
+                const dist = Math.sqrt(dx * dx + dy * dy);
 
-                const dirX = dx / dist;
-                const dirY = dy / dist;
+                if (dist < interactionRadius && dist > 0.1) {
+                  const norm = dist / interactionRadius;
+                  const falloff = (1 - norm) * (1 - norm);
+                  const shift = falloff * maxDisplacement;
 
-                targetOffsetX = dirX * shift + mouse.velX * 0.04 * falloff;
-                targetOffsetY = dirY * shift + mouse.velY * 0.04 * falloff;
+                  const dirX = dx / dist;
+                  const dirY = dy / dist;
 
-                const totalShift = Math.sqrt(
-                  targetOffsetX * targetOffsetX + targetOffsetY * targetOffsetY
-                );
-                if (totalShift > maxDisplacement) {
-                  targetOffsetX = (targetOffsetX / totalShift) * maxDisplacement;
-                  targetOffsetY = (targetOffsetY / totalShift) * maxDisplacement;
+                  targetOffsetX = dirX * shift + mouse.velX * 0.03 * falloff;
+                  targetOffsetY = dirY * shift + mouse.velY * 0.03 * falloff;
+
+                  targetActivation = falloff;
                 }
-
-                targetActivation = falloff;
               }
             }
 
@@ -272,7 +276,7 @@ export default function InteractiveGridBackground({
             node.x += node.vx;
             node.y += node.vy;
 
-            node.activation += (targetActivation - node.activation) * 0.18;
+            node.activation += (targetActivation - node.activation) * 0.2;
           }
         }
       }
@@ -294,18 +298,17 @@ export default function InteractiveGridBackground({
 
           const isExplicitSquare = squaresLookup.has(`${c},${r}`);
           const avgActivation =
-            (n00.activation + n10.activation + n11.activation + n01.activation) /
-            4;
+            (n00.activation + n10.activation + n11.activation + n01.activation) / 4;
 
           if (avgActivation > 0.03 || isExplicitSquare) {
             const act = isExplicitSquare ? Math.max(avgActivation, 0.45) : avgActivation;
             ctx.save();
-            ctx.shadowColor = "rgba(234, 179, 8, 0.9)";
-            ctx.shadowBlur = Math.round(act * 14);
-            ctx.lineWidth = 1 + act * 0.8;
+            ctx.shadowColor = "rgba(234, 179, 8, 0.85)";
+            ctx.shadowBlur = Math.round(act * 12);
+            ctx.lineWidth = 1 + act * 0.6;
 
-            ctx.fillStyle = `rgba(254, 240, 138, ${act * 0.32})`;
-            ctx.strokeStyle = `rgba(234, 179, 8, ${Math.min(1, act * 1.2)})`;
+            ctx.fillStyle = `rgba(254, 240, 138, ${act * 0.3})`;
+            ctx.strokeStyle = `rgba(234, 179, 8, ${Math.min(1, act * 1.1)})`;
 
             ctx.beginPath();
             ctx.moveTo(n00.x, n00.y);
@@ -321,7 +324,7 @@ export default function InteractiveGridBackground({
         }
       }
 
-      // 3. Grid Lines Pass (dashed stroke)
+      // 3. Grid Lines Pass (single batched dashed stroke)
       ctx.save();
       if (dashPattern.length > 0) {
         ctx.setLineDash(dashPattern);
@@ -351,33 +354,42 @@ export default function InteractiveGridBackground({
       ctx.stroke();
       ctx.restore();
 
-      // 4. Reactive Particles at Grid Intersections
+      // 4. Reactive Particles at Grid Intersections (rendered only for excited nodes)
       for (let c = 0; c < cols; c++) {
         for (let r = 0; r < rows; r++) {
           const node = grid[c][r];
           const act = node.activation;
 
-          ctx.beginPath();
-          if (act > 0.04) {
-            const pRadius = 1.4 + act * 2.2;
+          if (act > 0.03) {
+            ctx.beginPath();
+            const pRadius = 1.4 + act * 2.0;
             ctx.arc(node.x, node.y, pRadius, 0, Math.PI * 2);
             ctx.fillStyle = `rgba(234, 179, 8, ${0.4 + act * 0.6})`;
             ctx.shadowColor = "rgba(234, 179, 8, 0.85)";
             ctx.shadowBlur = act * 8;
             ctx.fill();
-          } else {
-            ctx.arc(node.x, node.y, 1.1, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(212, 212, 216, 0.65)";
-            ctx.shadowBlur = 0;
-            ctx.fill();
           }
         }
       }
 
-      if (!prefersReducedMotion) {
+      if (!prefersReducedMotion && isVisible) {
         animationFrameId = requestAnimationFrame(render);
+      } else {
+        animationFrameId = 0;
       }
     };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible && !prefersReducedMotion && !animationFrameId) {
+          updateRect();
+          animationFrameId = requestAnimationFrame(render);
+        }
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(canvas);
 
     if (prefersReducedMotion) {
       render(0);
@@ -386,10 +398,14 @@ export default function InteractiveGridBackground({
     }
 
     return () => {
+      observer.disconnect();
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", updateRect);
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
-      cancelAnimationFrame(animationFrameId);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
     };
   }, [cellWidth, cellHeight, offsetX, offsetY, strokeDasharray, maxDisplacement, interactionRadius, squares]);
 
