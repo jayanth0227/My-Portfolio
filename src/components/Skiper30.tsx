@@ -34,14 +34,12 @@ const Skiper30 = ({ images = DEFAULT_IMAGES, className = "" }: Skiper30Props) =>
   });
 
   const { height } = dimension;
-  // Subdued, highly optimized parallax velocities to eliminate GPU stutter
   const y = useTransform(scrollYProgress, [0, 1], [0, height * 0.45]);
   const y2 = useTransform(scrollYProgress, [0, 1], [0, height * 0.8]);
   const y3 = useTransform(scrollYProgress, [0, 1], [0, height * 0.35]);
   const y4 = useTransform(scrollYProgress, [0, 1], [0, height * 0.7]);
 
   useEffect(() => {
-    // Tuned lightweight Lenis configuration for smooth 60fps scrolling without input latency
     const lenis = new Lenis({
       lerp: 0.1,
       smoothWheel: true,
@@ -74,33 +72,33 @@ const Skiper30 = ({ images = DEFAULT_IMAGES, className = "" }: Skiper30Props) =>
   const imageList = images.length >= 12 ? images : DEFAULT_IMAGES;
 
   return (
-    <section id="projects" className={`relative w-full bg-[#fafafa] text-neutral-900 ${className}`}>
+    <section id="projects" className={`relative w-full bg-[var(--section-alt-bg)] text-[var(--foreground)] ${className}`}>
       {/* Intro section with clean spacing */}
       <div className="relative flex flex-col items-center justify-center text-center px-4 pt-28 pb-16">
         <div className="flex flex-col items-center gap-4 max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-xs font-medium text-neutral-700 shadow-xs">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card-bg)] px-3.5 py-1.5 text-xs font-medium text-[var(--muted-fg)] shadow-xs">
             <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
             <span>Curated Showcase &amp; Architecture</span>
           </div>
 
-          <h2 className="text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl">
+          <h2 className="text-3xl font-extrabold tracking-tight text-[var(--foreground)] sm:text-5xl">
             Selected Work &amp; Creations
           </h2>
 
-          <p className="text-sm sm:text-base text-neutral-600 max-w-lg">
+          <p className="text-sm sm:text-base text-[var(--muted-fg)] max-w-lg">
             A dynamic visual exploration of cloud applications, interactive user experiences, and distributed infrastructure.
           </p>
 
-          <span className="relative max-w-[14ch] text-xs uppercase tracking-widest text-neutral-400 pt-6 after:absolute after:left-1/2 after:top-full after:h-12 after:w-px after:bg-gradient-to-b after:from-neutral-300 after:to-neutral-900 after:content-['']">
+          <span className="relative max-w-[14ch] text-xs uppercase tracking-widest text-[var(--muted-fg)] pt-6 after:absolute after:left-1/2 after:top-full after:h-12 after:w-px after:bg-gradient-to-b after:from-neutral-300 after:to-neutral-900 dark:after:from-neutral-600 dark:after:to-neutral-100 after:content-['']">
             scroll down to see
           </span>
         </div>
       </div>
 
-      {/* Parallax 4-Column Gallery with Hardware Acceleration */}
+      {/* Parallax 4-Column Gallery */}
       <div
         ref={gallery}
-        className="relative box-border flex h-[130vh] gap-[1.8vw] overflow-hidden bg-white p-[2vw]"
+        className="relative box-border flex h-[130vh] gap-[1.8vw] overflow-hidden bg-[var(--background)] p-[2vw]"
       >
         <Column images={[imageList[0], imageList[1], imageList[2]]} y={y} />
         <Column images={[imageList[3], imageList[4], imageList[5]]} y={y2} />
@@ -109,8 +107,8 @@ const Skiper30 = ({ images = DEFAULT_IMAGES, className = "" }: Skiper30Props) =>
       </div>
 
       {/* Outro spacer */}
-      <div className="relative flex items-center justify-center text-center py-20 bg-[#fafafa]">
-        <span className="relative max-w-[14ch] text-xs uppercase tracking-widest text-neutral-400 after:absolute after:left-1/2 after:top-full after:h-10 after:w-px after:bg-gradient-to-b after:from-neutral-300 after:to-neutral-900 after:content-['']">
+      <div className="relative flex items-center justify-center text-center py-20 bg-[var(--section-alt-bg)]">
+        <span className="relative max-w-[14ch] text-xs uppercase tracking-widest text-[var(--muted-fg)] after:absolute after:left-1/2 after:top-full after:h-10 after:w-px after:bg-gradient-to-b after:from-neutral-300 after:to-neutral-900 dark:after:from-neutral-600 dark:after:to-neutral-100 after:content-['']">
           scroll to explore
         </span>
       </div>
@@ -132,7 +130,7 @@ const Column = ({ images, y }: ColumnProps) => {
       {images.map((src, i) => (
         <div
           key={i}
-          className="relative h-full w-full overflow-hidden rounded-2xl border border-neutral-200/80 bg-neutral-100 shadow-sm transition-all duration-300 hover:shadow-md"
+          className="relative h-full w-full overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--muted)] shadow-sm transition-all duration-300 hover:shadow-md"
         >
           <img
             src={src}

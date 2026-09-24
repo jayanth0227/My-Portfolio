@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { animate } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 
 export interface NavItem {
   label: string;
@@ -34,11 +35,9 @@ export function SpotlightNavbar({
   const [activeIndex, setActiveIndex] = useState(defaultActiveIndex);
   const [hoverX, setHoverX] = useState<number | null>(null);
 
-  // Refs for light positions to animate imperatively
   const spotlightX = useRef(0);
   const ambienceX = useRef(0);
 
-  // Mouse move spotlight tracking
   useEffect(() => {
     if (!navRef.current) return;
     const nav = navRef.current;
@@ -57,12 +56,10 @@ export function SpotlightNavbar({
 
     const handleMouseLeave = () => {
       setHoverX(null);
-      // Spring spotlight back to active item
       const activeItem = nav.querySelector(`[data-index="${activeIndex}"]`);
       if (activeItem) {
         const itemRect = activeItem.getBoundingClientRect();
         const targetX = itemRect.left - rect.left + itemRect.width / 2;
-
         animate(spotlightX.current, targetX, {
           type: "spring",
           stiffness: 220,
@@ -90,7 +87,6 @@ export function SpotlightNavbar({
     };
   }, [activeIndex]);
 
-  // Handle ambience indicator movement
   useEffect(() => {
     if (!navRef.current) return;
     const nav = navRef.current;
@@ -116,11 +112,8 @@ export function SpotlightNavbar({
   const handleItemClick = (item: NavItem, index: number) => {
     setActiveIndex(index);
     onItemClick?.(item, index);
-
-    // Smooth scroll to section if hash link
     if (item.href.startsWith("#")) {
-      const targetId = item.href.slice(1);
-      const targetEl = document.getElementById(targetId);
+      const targetEl = document.getElementById(item.href.slice(1));
       if (targetEl) {
         targetEl.scrollIntoView({ behavior: "smooth" });
       }
@@ -128,23 +121,21 @@ export function SpotlightNavbar({
   };
 
   return (
-    <div className={cn("relative flex justify-center", className)}>
+    <div className={cn("relative flex items-center gap-2", className)}>
+      {/* Nav pill */}
       <nav
         ref={navRef}
         className={cn(
           "relative h-11 rounded-full transition-all duration-300 overflow-hidden",
-          "border border-neutral-200/80 bg-white/80 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)]",
-          "dark:border-white/10 dark:bg-neutral-900/80 dark:shadow-[0_4px_25px_-4px_rgba(0,0,0,0.4)]",
-          "spotlight-nav spotlight-nav-bg glass-border spotlight-nav-shadow"
+          "border border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-md",
+          "shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_25px_-4px_rgba(0,0,0,0.5)]",
+          "spotlight-nav"
         )}
       >
         {/* Nav Links */}
         <ul className="relative flex items-center h-full px-2 gap-1 z-[10]">
           {items.map((item, idx) => (
-            <li
-              key={idx}
-              className="relative h-full flex items-center justify-center"
-            >
+            <li key={idx} className="relative h-full flex items-center justify-center">
               <a
                 href={item.href}
                 data-index={idx}
@@ -154,10 +145,10 @@ export function SpotlightNavbar({
                 }}
                 className={cn(
                   "px-3.5 py-1.5 text-xs sm:text-sm font-medium transition-colors duration-200 rounded-full select-none cursor-pointer",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 dark:focus-visible:ring-yellow-400",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400",
                   activeIndex === idx
-                    ? "text-neutral-950 font-semibold dark:text-white"
-                    : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+                    ? "text-[var(--foreground)] font-semibold"
+                    : "text-[var(--muted-fg)] hover:text-[var(--foreground)]"
                 )}
               >
                 {item.label}
@@ -166,49 +157,29 @@ export function SpotlightNavbar({
           ))}
         </ul>
 
-        {/* 1. Moving Spotlight (Follows Mouse with Warm Amber/Gold Glow) */}
+        {/* Moving Spotlight (Follows Mouse) */}
         <div
-          className="pointer-events-none absolute bottom-0 left-0 w-full h-full z-[1] opacity-0 transition-opacity duration-300"
+          className="pointer-events-none absolute bottom-0 left-0 w-full h-full z-[1]"
           style={{
             opacity: hoverX !== null ? 1 : 0,
-            background: `
-              radial-gradient(
-                130px circle at var(--spotlight-x, 0px) 100%, 
-                var(--spotlight-color, rgba(234, 179, 8, 0.16)) 0%, 
-                transparent 60%
-              )
-            `,
+            transition: "opacity 0.2s",
+            background: `radial-gradient(130px circle at var(--spotlight-x, 0px) 100%, rgba(234,179,8,0.15) 0%, transparent 60%)`,
           }}
         />
 
-        {/* 2. Active Ambience Underline (Stays on Active Item with Golden Glow) */}
+        {/* Active Ambience Underline */}
         <div
           className="pointer-events-none absolute bottom-0 left-0 w-full h-[2.5px] z-[2]"
           style={{
-            background: `
-              radial-gradient(
-                70px circle at var(--ambience-x, 0px) 0%, 
-                var(--ambience-color, rgba(234, 179, 8, 0.95)) 0%, 
-                transparent 100%
-              )
-            `,
+            background: `radial-gradient(70px circle at var(--ambience-x, 0px) 0%, rgba(234,179,8,0.95) 0%, transparent 100%)`,
           }}
         />
       </nav>
 
-      {/* Styled JSX for Dynamic Theme Accent Colors */}
-      <style jsx>{`
-        nav {
-          /* Warm Amber / Electric Gold Light Mode */
-          --spotlight-color: rgba(234, 179, 8, 0.14);
-          --ambience-color: rgba(234, 179, 8, 0.95);
-        }
-        :global(.dark) nav {
-          /* Bright Vibrant Gold Dark Mode */
-          --spotlight-color: rgba(250, 204, 21, 0.22);
-          --ambience-color: rgba(250, 204, 21, 1);
-        }
-      `}</style>
+      {/* Theme Toggler — sits right of the nav pill */}
+      <div className="flex items-center justify-center h-11 w-11 rounded-full border border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_25px_-4px_rgba(0,0,0,0.5)]">
+        <AnimatedThemeToggler size={44} />
+      </div>
     </div>
   );
 }

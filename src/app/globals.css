@@ -4,6 +4,92 @@
   --background: #ffffff;
   --foreground: #09090b;
   --border: #e4e4e7;
+  --card-bg: #ffffff;
+  --card-border: rgba(228, 228, 231, 0.9);
+  --card-shadow: rgba(0, 0, 0, 0.14);
+  --card-shadow-hover: rgba(202, 138, 4, 0.2);
+  --muted: #f4f4f5;
+  --muted-fg: #71717a;
+  --accent: #ca8a04;
+  --accent-light: rgba(234, 179, 8, 0.14);
+  --accent-glow: rgba(234, 179, 8, 0.95);
+  --badge-bg: rgba(255, 251, 235, 0.8);
+  --badge-border: rgba(253, 230, 138, 0.9);
+  --badge-text: #78350f;
+  --pill-bg: rgba(244, 244, 245, 0.9);
+  --pill-text: #3f3f46;
+  --section-alt-bg: #fafafa;
+  --hero-glow-from: rgba(253, 224, 71, 0.4);
+  --hero-glow-via: rgba(251, 191, 36, 0.25);
+  --hero-glow-to: rgba(254, 243, 199, 0.1);
+  --terminal-bg: #18181b;
+  --terminal-border: #27272a;
+  --terminal-text: #f4f4f5;
+  --hexagon-stroke: rgba(212, 212, 216, 0.9);
+  --hexagon-active-stroke: rgba(234, 179, 8, 0.95);
+  --hexagon-active-fill: rgba(254, 240, 138, 0.35);
+  --hexagon-glow-1: rgba(254, 240, 138, 0.4);
+  --hexagon-glow-2: rgba(250, 204, 21, 0.2);
+  --hexagon-glow-3: rgba(234, 179, 8, 0.06);
+  --grid-stroke: rgba(212, 212, 216, 0.6);
+  --selection-bg: #fef08a;
+  --selection-text: #1c1917;
+  --btn-primary-bg: #171717;
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover: #262626;
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-text: #1c1917;
+  --btn-secondary-border: #d4d4d8;
+  --btn-secondary-hover: #fafafa;
+  --lanyard-from: #d49925;
+  --lanyard-via: #eab308;
+  --lanyard-to: #ca8a04;
+}
+
+.dark {
+  --background: #0a0a0b;
+  --foreground: #f4f4f5;
+  --border: #27272a;
+  --card-bg: #18181b;
+  --card-border: rgba(63, 63, 70, 0.7);
+  --card-shadow: rgba(0, 0, 0, 0.45);
+  --card-shadow-hover: rgba(250, 204, 21, 0.15);
+  --muted: #27272a;
+  --muted-fg: #a1a1aa;
+  --accent: #eab308;
+  --accent-light: rgba(250, 204, 21, 0.12);
+  --accent-glow: rgba(250, 204, 21, 1);
+  --badge-bg: rgba(63, 63, 70, 0.5);
+  --badge-border: rgba(113, 113, 122, 0.4);
+  --badge-text: #fbbf24;
+  --pill-bg: rgba(39, 39, 42, 0.9);
+  --pill-text: #a1a1aa;
+  --section-alt-bg: #0f0f11;
+  --hero-glow-from: rgba(250, 204, 21, 0.25);
+  --hero-glow-via: rgba(234, 179, 8, 0.15);
+  --hero-glow-to: rgba(202, 138, 4, 0.05);
+  --terminal-bg: #0f0f11;
+  --terminal-border: #27272a;
+  --terminal-text: #e4e4e7;
+  --hexagon-stroke: rgba(63, 63, 70, 0.7);
+  --hexagon-active-stroke: rgba(250, 204, 21, 0.9);
+  --hexagon-active-fill: rgba(234, 179, 8, 0.15);
+  --hexagon-glow-1: rgba(250, 204, 21, 0.3);
+  --hexagon-glow-2: rgba(234, 179, 8, 0.15);
+  --hexagon-glow-3: rgba(202, 138, 4, 0.04);
+  --grid-stroke: rgba(63, 63, 70, 0.5);
+  --selection-bg: rgba(234, 179, 8, 0.3);
+  --selection-text: #fafafa;
+  --btn-primary-bg: #fafafa;
+  --btn-primary-text: #09090b;
+  --btn-primary-hover: #e4e4e7;
+  --btn-secondary-bg: #27272a;
+  --btn-secondary-text: #e4e4e7;
+  --btn-secondary-border: #3f3f46;
+  --btn-secondary-hover: #3f3f46;
+  --lanyard-from: #b45309;
+  --lanyard-via: #ca8a04;
+  --lanyard-to: #a16207;
 }
 
 html, body {
@@ -15,10 +101,32 @@ html, body {
   min-height: 100%;
   overflow-x: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background-color 0.4s ease, color 0.4s ease;
 
   /* Hide scrollbar for all browsers */
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+/* Smooth theme transition for key properties */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+}
+
+/* Disable transitions on motion elements to avoid conflicts */
+[style*="transform"],
+canvas,
+svg {
+  transition-property: none !important;
+}
+
+::selection {
+  background-color: var(--selection-bg);
+  color: var(--selection-text);
 }
 
 /* Hide scrollbar for Chrome, Safari, Edge, and Opera */

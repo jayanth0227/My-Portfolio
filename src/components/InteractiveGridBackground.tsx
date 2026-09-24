@@ -9,29 +9,49 @@ interface GridNode {
   y: number;
   vx: number;
   vy: number;
-  activation: number; // 0 to 1
+  activation: number;
   phase: number;
 }
 
 export interface InteractiveGridBackgroundProps {
-  /** Width of each grid square cell in pixels */
   width?: number;
-  /** Height of each grid square cell in pixels */
   height?: number;
-  /** Pattern origin offset X */
   x?: number;
-  /** Pattern origin offset Y */
   y?: number;
-  /** Dash pattern string (e.g. "4 2") */
   strokeDasharray?: string;
-  /** Max spring displacement in pixels */
   maxDisplacement?: number;
-  /** Radius of interactive mouse field */
   interactionRadius?: number;
-  /** Additional CSS class names */
   className?: string;
-  /** Optional pre-highlighted squares [col, row] */
   squares?: Array<[col: number, row: number]>;
+}
+
+const LIGHT = {
+  stroke: "rgba(212, 212, 216, 0.85)",
+  glow1: "rgba(254, 240, 138, 0.4)",
+  glow2: "rgba(250, 204, 21, 0.2)",
+  glow3: "rgba(234, 179, 8, 0.06)",
+  glow4: "rgba(234, 179, 8, 0)",
+  cellStrokeOuter: (a: number) => `rgba(234, 179, 8, ${a * 0.45})`,
+  cellStrokeInner: (a: number) => `rgba(234, 179, 8, ${Math.min(1, a * 1.1)})`,
+  cellFill: (a: number) => `rgba(254, 240, 138, ${a * 0.35})`,
+  particle: (a: number) => `rgba(234, 179, 8, ${0.4 + a * 0.6})`,
+};
+
+const DARK = {
+  stroke: "rgba(63, 63, 70, 0.6)",
+  glow1: "rgba(250, 204, 21, 0.3)",
+  glow2: "rgba(234, 179, 8, 0.15)",
+  glow3: "rgba(202, 138, 4, 0.04)",
+  glow4: "rgba(202, 138, 4, 0)",
+  cellStrokeOuter: (a: number) => `rgba(250, 204, 21, ${a * 0.4})`,
+  cellStrokeInner: (a: number) => `rgba(250, 204, 21, ${Math.min(1, a * 0.9)})`,
+  cellFill: (a: number) => `rgba(234, 179, 8, ${a * 0.18})`,
+  particle: (a: number) => `rgba(250, 204, 21, ${0.35 + a * 0.55})`,
+};
+
+function getColors() {
+  if (typeof document !== "undefined" && document.documentElement.classList.contains("dark")) return DARK;
+  return LIGHT;
 }
 
 export default function InteractiveGridBackground({
@@ -50,37 +70,29 @@ export default function InteractiveGridBackground({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     let animationFrameId: number = 0;
     let isVisible = true;
     let canvasW = 0;
     let canvasH = 0;
     let dpr = 1;
+    let colors = getColors();
 
-    // Parse stroke dash array
-    const dashPattern = strokeDasharray
-      .split(/[\s,]+/)
-      .map((n) => parseFloat(n))
-      .filter((n) => !isNaN(n));
+    const themeObserver = new MutationObserver(() => {
+      colors = getColors();
+      if (!isAnimating) requestRender();
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
-    // Mouse tracking state
+    const dashPattern = strokeDasharray.split(/[\s,]+/).map((n) => parseFloat(n)).filter((n) => !isNaN(n));
+
     const mouse = {
-      x: -9999,
-      y: -9999,
-      targetX: -9999,
-      targetY: -9999,
-      velX: 0,
-      velY: 0,
-      prevX: -9999,
-      prevY: -9999,
-      isInside: false,
+      x: -9999, y: -9999, targetX: -9999, targetY: -9999,
+      velX: 0, velY: 0, prevX: -9999, prevY: -9999, isInside: false,
     };
 
     let cols = 0;
@@ -91,321 +103,183 @@ export default function InteractiveGridBackground({
       cols = Math.ceil(canvasW / cellWidth) + 2;
       rows = Math.ceil(canvasH / cellHeight) + 2;
       grid = [];
-
       for (let c = 0; c < cols; c++) {
         grid[c] = [];
         for (let r = 0; r < rows; r++) {
-          const originX = (c - 1) * cellWidth + offsetX;
-          const originY = (r - 1) * cellHeight + offsetY;
-
-          grid[c][r] = {
-            originX,
-            originY,
-            x: originX,
-            y: originY,
-            vx: 0,
-            vy: 0,
-            activation: 0,
-            phase: (c * 17 + r * 29) % (Math.PI * 2),
-          };
+          const oX = (c - 1) * cellWidth + offsetX;
+          const oY = (r - 1) * cellHeight + offsetY;
+          grid[c][r] = { originX: oX, originY: oY, x: oX, y: oY, vx: 0, vy: 0, activation: 0, phase: (c * 17 + r * 29) % (Math.PI * 2) };
         }
       }
     };
 
-    // Cache rect to eliminate forced reflows during mouse movement
     let rect = canvas.getBoundingClientRect();
-    const updateRect = () => {
-      if (canvas) rect = canvas.getBoundingClientRect();
+    const updateRect = () => { if (canvas) rect = canvas.getBoundingClientRect(); };
+
+    let isAnimating = false;
+    const requestRender = () => {
+      if (!isAnimating && !prefersReducedMotion && isVisible) {
+        isAnimating = true;
+        animationFrameId = requestAnimationFrame(render);
+      }
+    };
+
+    const springSpeed = 0.15;
+    const damping = 0.78;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      if (cx >= -60 && cx <= rect.width + 60 && cy >= -60 && cy <= rect.height + 60) {
+        mouse.isInside = true; mouse.targetX = cx; mouse.targetY = cy;
+        if (mouse.x < -1000) { mouse.x = cx; mouse.y = cy; }
+        if (mouse.prevX !== -9999) {
+          mouse.velX = mouse.velX * 0.3 + (cx - mouse.prevX) * 0.7;
+          mouse.velY = mouse.velY * 0.3 + (cy - mouse.prevY) * 0.7;
+        }
+        mouse.prevX = cx; mouse.prevY = cy;
+        requestRender();
+      } else { mouse.isInside = false; mouse.targetX = -9999; mouse.targetY = -9999; }
+    };
+
+    const handleMouseLeave = () => {
+      mouse.isInside = false; mouse.targetX = -9999; mouse.targetY = -9999; mouse.prevX = -9999; mouse.prevY = -9999;
     };
 
     const handleResize = () => {
       if (!canvas) return;
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, 1.25);
       canvasW = canvas.parentElement?.clientWidth || window.innerWidth;
       canvasH = canvas.parentElement?.clientHeight || window.innerHeight;
-
-      canvas.width = canvasW * dpr;
-      canvas.height = canvasH * dpr;
+      canvas.width = Math.floor(canvasW * dpr);
+      canvas.height = Math.floor(canvasH * dpr);
       canvas.style.width = `${canvasW}px`;
       canvas.style.height = `${canvasH}px`;
-
       ctx.scale(dpr, dpr);
-      initGrid();
-      updateRect();
+      initGrid(); updateRect();
+      render(performance.now());
     };
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("scroll", updateRect, { passive: true });
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const clientX = e.clientX - rect.left;
-      const clientY = e.clientY - rect.top;
-
-      if (
-        clientX >= -60 &&
-        clientX <= rect.width + 60 &&
-        clientY >= -60 &&
-        clientY <= rect.height + 60
-      ) {
-        mouse.isInside = true;
-        mouse.targetX = clientX;
-        mouse.targetY = clientY;
-
-        if (mouse.x < -1000) {
-          mouse.x = clientX;
-          mouse.y = clientY;
-        }
-
-        if (mouse.prevX !== -9999) {
-          const dx = clientX - mouse.prevX;
-          const dy = clientY - mouse.prevY;
-          mouse.velX = mouse.velX * 0.4 + dx * 0.6;
-          mouse.velY = mouse.velY * 0.4 + dy * 0.6;
-        }
-
-        mouse.prevX = clientX;
-        mouse.prevY = clientY;
-      } else {
-        mouse.isInside = false;
-        mouse.targetX = -9999;
-        mouse.targetY = -9999;
-      }
-    };
-
-    const handleMouseLeave = () => {
-      mouse.isInside = false;
-      mouse.targetX = -9999;
-      mouse.targetY = -9999;
-      mouse.prevX = -9999;
-      mouse.prevY = -9999;
-    };
-
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    document.addEventListener("mouseleave", handleMouseLeave);
-
-    const springSpeed = 0.12;
-    const damping = 0.82;
-
-    const render = (now: number) => {
-      mouse.velX *= 0.84;
-      mouse.velY *= 0.84;
-
-      if (mouse.isInside && mouse.targetX > -1000) {
-        mouse.x = mouse.targetX;
-        mouse.y = mouse.targetY;
-      } else {
-        mouse.x = -9999;
-        mouse.y = -9999;
-      }
+    function render(_now: number) {
+      if (!ctx) return;
+      mouse.velX *= 0.8; mouse.velY *= 0.8;
+      if (mouse.isInside && mouse.targetX > -1000) { mouse.x = mouse.targetX; mouse.y = mouse.targetY; }
+      else { mouse.x = -9999; mouse.y = -9999; }
 
       ctx.clearRect(0, 0, canvasW, canvasH);
 
-      // 1. Neon Spotlight Glow matching Hero section
+      // Spotlight glow
       if (mouse.isInside && mouse.x > -500 && mouse.y > -500) {
-        const glowRadius = 220;
-        const glowGrad = ctx.createRadialGradient(
-          mouse.x,
-          mouse.y,
-          0,
-          mouse.x,
-          mouse.y,
-          glowRadius
-        );
-        glowGrad.addColorStop(0, "rgba(254, 240, 138, 0.42)");
-        glowGrad.addColorStop(0.3, "rgba(250, 204, 21, 0.22)");
-        glowGrad.addColorStop(0.6, "rgba(234, 179, 8, 0.08)");
-        glowGrad.addColorStop(1, "rgba(234, 179, 8, 0)");
-
-        ctx.save();
-        ctx.fillStyle = glowGrad;
-        ctx.beginPath();
-        ctx.arc(mouse.x, mouse.y, glowRadius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        const gr = 200;
+        const g = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, gr);
+        g.addColorStop(0, colors.glow1);
+        g.addColorStop(0.3, colors.glow2);
+        g.addColorStop(0.6, colors.glow3);
+        g.addColorStop(1, colors.glow4);
+        ctx.save(); ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(mouse.x, mouse.y, gr, 0, Math.PI * 2); ctx.fill(); ctx.restore();
       }
 
-      const timeSec = now * 0.001;
+      let maxActivity = Math.abs(mouse.velX) + Math.abs(mouse.velY);
 
-      // Update node physics with spatial distance pruning
       for (let c = 0; c < cols; c++) {
         for (let r = 0; r < rows; r++) {
           const node = grid[c][r];
-
           if (!prefersReducedMotion) {
-            const ambientX = Math.sin(timeSec * 0.6 + node.phase) * 0.35;
-            const ambientY = Math.cos(timeSec * 0.4 + node.phase) * 0.35;
-
-            let targetOffsetX = 0;
-            let targetOffsetY = 0;
-            let targetActivation = 0;
-
+            let toX = 0, toY = 0, tA = 0;
             if (mouse.x > -1000 && mouse.y > -1000) {
-              const dx = node.originX - mouse.x;
-              const dy = node.originY - mouse.y;
-
-              // Fast bounding box prune before square root
+              const dx = node.originX - mouse.x, dy = node.originY - mouse.y;
               if (Math.abs(dx) < interactionRadius && Math.abs(dy) < interactionRadius) {
                 const dist = Math.sqrt(dx * dx + dy * dy);
-
                 if (dist < interactionRadius && dist > 0.1) {
                   const norm = dist / interactionRadius;
                   const falloff = (1 - norm) * (1 - norm);
                   const shift = falloff * maxDisplacement;
-
-                  const dirX = dx / dist;
-                  const dirY = dy / dist;
-
-                  targetOffsetX = dirX * shift + mouse.velX * 0.03 * falloff;
-                  targetOffsetY = dirY * shift + mouse.velY * 0.03 * falloff;
-
-                  targetActivation = falloff;
+                  toX = (dx / dist) * shift + mouse.velX * 0.02 * falloff;
+                  toY = (dy / dist) * shift + mouse.velY * 0.02 * falloff;
+                  tA = falloff;
                 }
               }
             }
-
-            const destX = node.originX + ambientX + targetOffsetX;
-            const destY = node.originY + ambientY + targetOffsetY;
-
-            const springForceX = (destX - node.x) * springSpeed;
-            const springForceY = (destY - node.y) * springSpeed;
-
-            node.vx = (node.vx + springForceX) * damping;
-            node.vy = (node.vy + springForceY) * damping;
-
-            node.x += node.vx;
-            node.y += node.vy;
-
-            node.activation += (targetActivation - node.activation) * 0.2;
+            const dX = node.originX + toX, dY = node.originY + toY;
+            node.vx = (node.vx + (dX - node.x) * springSpeed) * damping;
+            node.vy = (node.vy + (dY - node.y) * springSpeed) * damping;
+            node.x += node.vx; node.y += node.vy;
+            node.activation += (tA - node.activation) * 0.25;
+            const m = Math.abs(node.vx) + Math.abs(node.vy) + Math.abs(node.x - node.originX) + Math.abs(node.y - node.originY) + node.activation;
+            if (m > maxActivity) maxActivity = m;
           }
         }
       }
 
-      // 2. Active Cells Pass (highlighted square tiles)
-      const squaresLookup = new Set<string>();
-      if (squares && squares.length > 0) {
-        for (const [sqC, sqR] of squares) {
-          squaresLookup.add(`${sqC},${sqR}`);
-        }
-      }
+      // Active cells
+      const sqSet = new Set<string>();
+      if (squares) for (const [sc, sr] of squares) sqSet.add(`${sc},${sr}`);
 
       for (let c = 0; c < cols - 1; c++) {
         for (let r = 0; r < rows - 1; r++) {
-          const n00 = grid[c][r];
-          const n10 = grid[c + 1][r];
-          const n11 = grid[c + 1][r + 1];
-          const n01 = grid[c][r + 1];
-
-          const isExplicitSquare = squaresLookup.has(`${c},${r}`);
-          const avgActivation =
-            (n00.activation + n10.activation + n11.activation + n01.activation) / 4;
-
-          if (avgActivation > 0.03 || isExplicitSquare) {
-            const act = isExplicitSquare ? Math.max(avgActivation, 0.45) : avgActivation;
+          const n00 = grid[c][r], n10 = grid[c + 1][r], n11 = grid[c + 1][r + 1], n01 = grid[c][r + 1];
+          const isSq = sqSet.has(`${c},${r}`);
+          const avg = (n00.activation + n10.activation + n11.activation + n01.activation) / 4;
+          if (avg > 0.02 || isSq) {
+            const act = isSq ? Math.max(avg, 0.45) : avg;
             ctx.save();
-            ctx.shadowColor = "rgba(234, 179, 8, 0.85)";
-            ctx.shadowBlur = Math.round(act * 12);
-            ctx.lineWidth = 1 + act * 0.6;
-
-            ctx.fillStyle = `rgba(254, 240, 138, ${act * 0.3})`;
-            ctx.strokeStyle = `rgba(234, 179, 8, ${Math.min(1, act * 1.1)})`;
-
-            ctx.beginPath();
-            ctx.moveTo(n00.x, n00.y);
-            ctx.lineTo(n10.x, n10.y);
-            ctx.lineTo(n11.x, n11.y);
-            ctx.lineTo(n01.x, n01.y);
-            ctx.closePath();
-
-            ctx.fill();
-            ctx.stroke();
-            ctx.restore();
+            ctx.lineWidth = 2.2; ctx.strokeStyle = colors.cellStrokeOuter(act);
+            ctx.beginPath(); ctx.moveTo(n00.x, n00.y); ctx.lineTo(n10.x, n10.y); ctx.lineTo(n11.x, n11.y); ctx.lineTo(n01.x, n01.y); ctx.closePath(); ctx.stroke();
+            ctx.lineWidth = 1 + act * 0.4;
+            ctx.fillStyle = colors.cellFill(act); ctx.strokeStyle = colors.cellStrokeInner(act);
+            ctx.fill(); ctx.stroke(); ctx.restore();
           }
         }
       }
 
-      // 3. Grid Lines Pass (single batched dashed stroke)
+      // Grid lines
       ctx.save();
-      if (dashPattern.length > 0) {
-        ctx.setLineDash(dashPattern);
-      }
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = "rgba(212, 212, 216, 0.85)";
-
+      if (dashPattern.length > 0) ctx.setLineDash(dashPattern);
+      ctx.lineWidth = 1; ctx.strokeStyle = colors.stroke;
       ctx.beginPath();
-      // Horizontal lines
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols - 1; c++) {
-          const from = grid[c][r];
-          const to = grid[c + 1][r];
-          ctx.moveTo(from.x, from.y);
-          ctx.lineTo(to.x, to.y);
-        }
-      }
-      // Vertical lines
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r < rows - 1; r++) {
-          const from = grid[c][r];
-          const to = grid[c][r + 1];
-          ctx.moveTo(from.x, from.y);
-          ctx.lineTo(to.x, to.y);
-        }
-      }
-      ctx.stroke();
-      ctx.restore();
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols - 1; c++) { const f = grid[c][r], t = grid[c + 1][r]; ctx.moveTo(f.x, f.y); ctx.lineTo(t.x, t.y); }
+      for (let c = 0; c < cols; c++) for (let r = 0; r < rows - 1; r++) { const f = grid[c][r], t = grid[c][r + 1]; ctx.moveTo(f.x, f.y); ctx.lineTo(t.x, t.y); }
+      ctx.stroke(); ctx.restore();
 
-      // 4. Reactive Particles at Grid Intersections (rendered only for excited nodes)
+      // Particles
       for (let c = 0; c < cols; c++) {
         for (let r = 0; r < rows; r++) {
           const node = grid[c][r];
-          const act = node.activation;
-
-          if (act > 0.03) {
+          if (node.activation > 0.03) {
             ctx.beginPath();
-            const pRadius = 1.4 + act * 2.0;
-            ctx.arc(node.x, node.y, pRadius, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(234, 179, 8, ${0.4 + act * 0.6})`;
-            ctx.shadowColor = "rgba(234, 179, 8, 0.85)";
-            ctx.shadowBlur = act * 8;
+            ctx.arc(node.x, node.y, 1.4 + node.activation * 1.8, 0, Math.PI * 2);
+            ctx.fillStyle = colors.particle(node.activation);
             ctx.fill();
           }
         }
       }
 
-      if (!prefersReducedMotion && isVisible) {
+      if (!prefersReducedMotion && isVisible && (maxActivity > 0.005 || mouse.isInside)) {
         animationFrameId = requestAnimationFrame(render);
-      } else {
-        animationFrameId = 0;
-      }
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        isVisible = entry.isIntersecting;
-        if (isVisible && !prefersReducedMotion && !animationFrameId) {
-          updateRect();
-          animationFrameId = requestAnimationFrame(render);
-        }
-      },
-      { threshold: 0.05 }
-    );
-    observer.observe(canvas);
-
-    if (prefersReducedMotion) {
-      render(0);
-    } else {
-      animationFrameId = requestAnimationFrame(render);
+      } else { isAnimating = false; animationFrameId = 0; }
     }
 
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+      if (isVisible && !prefersReducedMotion) { updateRect(); requestRender(); }
+      else if (!isVisible && animationFrameId) { cancelAnimationFrame(animationFrameId); isAnimating = false; animationFrameId = 0; }
+    }, { threshold: 0.05 });
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", updateRect, { passive: true });
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    document.addEventListener("mouseleave", handleMouseLeave);
+    observer.observe(canvas);
+
     return () => {
-      observer.disconnect();
+      themeObserver.disconnect(); observer.disconnect();
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", updateRect);
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
   }, [cellWidth, cellHeight, offsetX, offsetY, strokeDasharray, maxDisplacement, interactionRadius, squares]);
 

@@ -172,7 +172,7 @@ export function Lens({
           {LensContent}
           {showRim && (
             <div
-              className="pointer-events-none absolute rounded-full border border-neutral-300/80 shadow-md ring-1 ring-black/5"
+              className="pointer-events-none absolute rounded-full border-2 border-amber-400/60 shadow-[0_8px_32px_rgba(234,179,8,0.22),0_2px_10px_rgba(0,0,0,0.08)] backdrop-blur-[0.5px] bg-gradient-to-br from-white/20 via-transparent to-amber-200/10 ring-1 ring-black/5 overflow-hidden"
               style={{
                 width: `${lensSize}px`,
                 height: `${lensSize}px`,
@@ -180,7 +180,9 @@ export function Lens({
                 top: `${currentPosition.y - radius}px`,
                 zIndex: 60,
               }}
-            />
+            >
+              <div className="absolute inset-1 rounded-full border-t border-l border-white/60 pointer-events-none" />
+            </div>
           )}
         </>
       ) : (
@@ -190,11 +192,11 @@ export function Lens({
               {LensContent}
               {showRim && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.85 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration }}
-                  className="pointer-events-none absolute rounded-full border border-neutral-300/80 shadow-md ring-1 ring-black/5"
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={{ duration, ease: "easeOut" }}
+                  className="pointer-events-none absolute rounded-full border-2 border-amber-400/60 shadow-[0_8px_32px_rgba(234,179,8,0.22),0_2px_10px_rgba(0,0,0,0.08)] backdrop-blur-[0.5px] bg-gradient-to-br from-white/20 via-transparent to-amber-200/10 ring-1 ring-black/5 overflow-hidden"
                   style={{
                     width: `${lensSize}px`,
                     height: `${lensSize}px`,
@@ -202,7 +204,9 @@ export function Lens({
                     top: `${currentPosition.y - radius}px`,
                     zIndex: 60,
                   }}
-                />
+                >
+                  <div className="absolute inset-1 rounded-full border-t border-l border-white/60 pointer-events-none" />
+                </motion.div>
               )}
             </>
           )}
