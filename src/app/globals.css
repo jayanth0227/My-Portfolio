@@ -137,8 +137,32 @@ body::-webkit-scrollbar,
   width: 0 !important;
   height: 0 !important;
 }
-
 * {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
+
+/* Magic UI Orbiting Circles Animation */
+@keyframes orbit {
+  0% {
+    transform: rotate(calc(var(--angle) * 1deg)) translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg));
+  }
+  100% {
+    transform: rotate(calc(var(--angle) * 1deg + 360deg)) translateY(calc(var(--radius) * 1px)) rotate(calc((var(--angle) * -1deg) - 360deg));
+  }
+}
+
+.animate-orbit {
+  animation-name: orbit;
+  animation-duration: calc(var(--duration) * 1s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.animate-orbit-reverse {
+  animation-name: orbit;
+  animation-duration: calc(var(--duration) * 1s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-direction: reverse;
+}

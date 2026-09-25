@@ -2,6 +2,7 @@
 
 import Hero from "@/components/Hero";
 import About from "@/components/About";
+import TechOrbit from "@/components/TechOrbit";
 import { GridPattern } from "@/components/ui/grid-pattern";
 import { SpotlightNavbar } from "@/components/ui/spotlight-navbar";
 import { Skiper30 } from "@/components/Skiper30";
@@ -34,6 +35,9 @@ export default function Home() {
         {/* Foreground Content */}
         <About />
       </section>
+
+      {/* 2.5 Section: Interactive Java Full Stack Orbiting Circles (Under About) */}
+      <TechOrbit />
 
       {/* 3rd Section: Parallax Showcase Gallery (Skiper 30) */}
       <Skiper30 />
