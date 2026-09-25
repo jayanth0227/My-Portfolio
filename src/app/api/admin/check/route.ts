@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getEnvAdminCredentials } from "@/lib/adminAuth";
 
 export async function GET() {
   const cookieStore = await cookies();
   const session = cookieStore.get("admin_session")?.value;
 
   if (session === "authenticated") {
+    const creds = getEnvAdminCredentials();
     return NextResponse.json({
       authenticated: true,
-      email: process.env.ADMIN_EMAIL || "admin@portfolio.dev",
+      email: creds.email,
+      username: creds.username,
     });
   }
 

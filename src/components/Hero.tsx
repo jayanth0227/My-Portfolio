@@ -10,7 +10,7 @@ export default function Hero() {
   return (
     <section
       id="home"
-      className="relative flex min-h-screen lg:h-screen w-full items-center justify-center overflow-hidden bg-[var(--background)] px-4 sm:px-6 lg:px-12 pt-20 sm:pt-24 lg:pt-0 pb-0"
+      className="relative flex min-h-screen lg:min-h-screen w-full items-center justify-center overflow-hidden bg-[var(--background)] px-4 sm:px-6 lg:px-12 pt-28 sm:pt-32 lg:pt-28 pb-6 lg:pb-0"
     >
       {/* Interactive Anti-Gravity Magnetic Field Hexagon Background */}
       <InteractiveHexagonBackground radius={42} strokeDasharray="4 2" />
@@ -22,7 +22,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="flex-1 text-center lg:text-left lg:my-auto pt-4 sm:pt-6 lg:pt-0 max-w-2xl"
+          className="flex-1 text-center lg:text-left lg:my-auto pt-6 sm:pt-8 lg:pt-4 max-w-2xl"
         >
           {/* Status badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--muted)] px-3.5 py-1.5 text-xs font-medium text-[var(--muted-fg)] shadow-xs mb-4 sm:mb-6">

@@ -1,10 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Geist } from "next/font/google";
+import { Geist, Caveat } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-signature",
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -12,8 +17,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Portfolio",
-  description: "Dynamic Portfolio Application",
+  title: "Jayanth Sai Chikkala | Portfolio",
+  description: "Full-Stack Developer & Cloud Engineer Portfolio",
 };
 
 export default function RootLayout({
@@ -22,7 +27,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={cn("font-sans", geist.variable, caveat.variable)}
+      suppressHydrationWarning
+    >
       <head>
         {/* Inline script to prevent flash of incorrect theme */}
         <script

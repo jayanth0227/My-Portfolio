@@ -6,13 +6,14 @@ import TechOrbit from "@/components/TechOrbit";
 import { GridPattern } from "@/components/ui/grid-pattern";
 import { SpotlightNavbar } from "@/components/ui/spotlight-navbar";
 import { Skiper30 } from "@/components/Skiper30";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 
 export default function Home() {
   return (
     <main className="min-h-screen w-full bg-[var(--background)] selection:bg-[var(--selection-bg)] selection:text-[var(--selection-text)] relative">
-      {/* Floating Spotlight Navigation Bar */}
-      <header className="fixed top-5 left-0 right-0 z-50 flex justify-center pointer-events-none px-4">
-        <div className="pointer-events-auto">
+      {/* Top Floating Navigation Bar */}
+      <header className="fixed top-3 sm:top-5 left-0 right-0 z-50 flex justify-center pointer-events-none px-3 sm:px-6 lg:px-8">
+        <div className="w-full max-w-7xl pointer-events-auto">
           <SpotlightNavbar />
         </div>
       </header>
@@ -41,6 +42,9 @@ export default function Home() {
 
       {/* 3rd Section: Parallax Showcase Gallery (Skiper 30) */}
       <Skiper30 />
+
+      {/* Quick Action: Smooth Scroll to Top Button */}
+      <ScrollToTop />
     </main>
   );
 }

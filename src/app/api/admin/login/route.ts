@@ -1,24 +1,23 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-
-const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@portfolio.dev";
-const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+import { verifyAdminCredentials } from "@/lib/adminAuth";
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const identifier = body.email || body.username;
+    const password = body.password;
 
-    if (!email || !password) {
+    if (!identifier || !password) {
       return NextResponse.json(
-        { error: "Email and password are required." },
+        { error: "Email/username and password are required." },
         { status: 400 }
       );
     }
 
-    if (
-      email.toLowerCase().trim() === DEFAULT_ADMIN_EMAIL.toLowerCase().trim() &&
-      password === DEFAULT_ADMIN_PASSWORD
-    ) {
+    const authResult = await verifyAdminCredentials(identifier, password);
+
+    if (authResult.valid && authResult.user) {
       const cookieStore = await cookies();
       cookieStore.set("admin_session", "authenticated", {
         httpOnly: true,
@@ -31,12 +30,16 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         message: "Authentication successful.",
-        user: { email: DEFAULT_ADMIN_EMAIL, role: "admin" },
+        user: authResult.user,
       });
     }
 
     return NextResponse.json(
-      { error: "Invalid credentials. Please check your email and password." },
+      {
+        error:
+          authResult.error ||
+          "Invalid credentials. Please check your email/username and password.",
+      },
       { status: 401 }
     );
   } catch (error) {

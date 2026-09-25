@@ -6,10 +6,13 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
+    "seed:admin": "node scripts/seed-admin.mjs",
     "lint": "eslint"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.11.0",
     "clsx": "^2.1.1",

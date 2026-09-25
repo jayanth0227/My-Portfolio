@@ -14,7 +14,6 @@ import {
   MessageSquare,
   FolderGit2,
   AlertCircle,
-  Sparkles,
   RefreshCw,
   ExternalLink,
 } from "lucide-react";
@@ -55,6 +54,7 @@ interface ProjectItem {
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [adminEmail, setAdminEmail] = useState<string>("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -75,6 +75,7 @@ export default function AdminPage() {
         const data = await res.json();
         if (data.authenticated) {
           setIsAuthenticated(true);
+          if (data.email) setAdminEmail(data.email);
           loadDashboardData();
         } else {
           setIsAuthenticated(false);
@@ -130,6 +131,7 @@ export default function AdminPage() {
       }
 
       setIsAuthenticated(true);
+      if (data.user?.email) setAdminEmail(data.user.email);
       loadDashboardData();
     } catch {
       setError("Network or server error occurred. Please try again.");
@@ -146,12 +148,6 @@ export default function AdminPage() {
       setEmail("");
       setPassword("");
     }
-  };
-
-  const handleQuickFill = () => {
-    setEmail("admin@portfolio.dev");
-    setPassword("admin123");
-    setError(null);
   };
 
   return (
@@ -211,13 +207,10 @@ export default function AdminPage() {
               <Card className="relative w-full max-w-[380px] overflow-hidden border-[var(--border)] bg-[var(--card-bg)] shadow-[0_10px_35px_rgba(0,0,0,0.12)] dark:shadow-[0_15px_45px_rgba(0,0,0,0.5)] backdrop-blur-xl">
                 {/* Header */}
                 <CardHeader className="space-y-1.5 pb-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center">
                     <div className="h-10 w-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-xs">
                       <Lock className="h-5 w-5" />
                     </div>
-                    <span className="text-[11px] font-mono tracking-wider px-2 py-0.5 rounded-md bg-[var(--muted)] text-[var(--muted-fg)] border border-[var(--border)]">
-                      PORTAL / v1.0
-                    </span>
                   </div>
 
                   <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--foreground)] pt-2">
@@ -242,20 +235,21 @@ export default function AdminPage() {
                   )}
 
                   <form onSubmit={handleLogin} className="space-y-4" id="admin-login-form">
-                    {/* Email Input */}
+                    {/* Email / Username Input */}
                     <div className="space-y-1.5">
                       <Label htmlFor="email" className="text-xs font-semibold text-[var(--foreground)]">
-                        Email Address
+                        Email or Username
                       </Label>
                       <div className="relative">
                         <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--muted-fg)] pointer-events-none" />
                         <Input
                           id="email"
-                          type="email"
+                          type="text"
+                          autoComplete="username"
                           required
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="admin@portfolio.dev"
+                          placeholder="Enter your email or username"
                           className="pl-10 h-10 text-sm bg-[var(--background)] border-[var(--border)] focus-visible:ring-amber-500/40 focus-visible:border-amber-500"
                         />
                       </div>
@@ -263,24 +257,15 @@ export default function AdminPage() {
 
                     {/* Password Input */}
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="password" className="text-xs font-semibold text-[var(--foreground)]">
-                          Password
-                        </Label>
-                        <button
-                          type="button"
-                          onClick={handleQuickFill}
-                          className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <Sparkles className="h-3 w-3" />
-                          <span>Quick Demo Fill</span>
-                        </button>
-                      </div>
+                      <Label htmlFor="password" className="text-xs font-semibold text-[var(--foreground)]">
+                        Password
+                      </Label>
                       <div className="relative">
                         <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--muted-fg)] pointer-events-none" />
                         <Input
                           id="password"
                           type={showPassword ? "text" : "password"}
+                          autoComplete="current-password"
                           required
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
@@ -298,13 +283,6 @@ export default function AdminPage() {
                       </div>
                     </div>
                   </form>
-
-                  {/* Dev Credentials Info Hint */}
-                  <div className="rounded-lg p-2.5 bg-[var(--muted)]/60 border border-[var(--border)] text-[11px] text-[var(--muted-fg)] leading-relaxed">
-                    <span className="font-semibold text-[var(--foreground)]">Default Dev Credentials:</span>{" "}
-                    <span className="font-mono text-amber-600 dark:text-amber-400">admin@portfolio.dev</span> /{" "}
-                    <span className="font-mono text-amber-600 dark:text-amber-400">admin123</span>
-                  </div>
                 </CardContent>
 
                 {/* Footer Buttons */}
@@ -371,7 +349,10 @@ export default function AdminPage() {
                       Admin Dashboard
                     </h1>
                     <p className="text-xs sm:text-sm text-[var(--muted-fg)]">
-                      Logged in as <span className="font-mono text-amber-600 dark:text-amber-400 font-semibold">admin@portfolio.dev</span>
+                      Logged in as{" "}
+                      <span className="font-mono text-amber-600 dark:text-amber-400 font-semibold">
+                        {adminEmail || "jayanthyeswanth9@gmail.com"}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -507,69 +488,81 @@ export default function AdminPage() {
 
               {/* Tab: Projects */}
               {activeTab === "projects" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {projects.map((proj, idx) => (
-                    <div
-                      key={proj._id || idx}
-                      className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] overflow-hidden shadow-xs hover:border-amber-500/40 transition-all flex flex-col justify-between"
-                    >
-                      {proj.imageUrl && (
-                        <div className="relative h-36 w-full overflow-hidden bg-zinc-900">
-                          <img
-                            src={proj.imageUrl}
-                            alt={proj.title}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
-                        <div>
-                          <h3 className="font-bold text-sm text-[var(--foreground)]">{proj.title}</h3>
-                          <p className="text-xs text-[var(--muted-fg)] line-clamp-2 mt-1">
-                            {proj.description}
-                          </p>
-                        </div>
-
-                        <div className="pt-2">
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {proj.tags?.slice(0, 3).map((tag, tIdx) => (
-                              <span
-                                key={tIdx}
-                                className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[var(--muted)] text-[var(--muted-fg)]"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-
-                          <div className="flex items-center gap-2 pt-1 border-t border-[var(--border)] text-xs">
-                            {proj.liveUrl && (
-                              <a
-                                href={proj.liveUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 hover:underline"
-                              >
-                                <span>Demo</span>
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            )}
-                            {proj.githubUrl && (
-                              <a
-                                href={proj.githubUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 text-[var(--muted-fg)] hover:text-[var(--foreground)] ml-auto"
-                              >
-                                <span>Code</span>
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                <div className="space-y-3">
+                  {projects.length === 0 ? (
+                    <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-[var(--border)] text-[var(--muted-fg)]">
+                      <FolderGit2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm font-medium">No projects added yet.</p>
+                      <p className="text-xs text-[var(--muted-fg)] mt-1">
+                        Projects stored in your MongoDB database will appear here.
+                      </p>
                     </div>
-                  ))}
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {projects.map((proj, idx) => (
+                        <div
+                          key={proj._id || idx}
+                          className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] overflow-hidden shadow-xs hover:border-amber-500/40 transition-all flex flex-col justify-between"
+                        >
+                          {proj.imageUrl && (
+                            <div className="relative h-36 w-full overflow-hidden bg-zinc-900">
+                              <img
+                                src={proj.imageUrl}
+                                alt={proj.title}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
+                            <div>
+                              <h3 className="font-bold text-sm text-[var(--foreground)]">{proj.title}</h3>
+                              <p className="text-xs text-[var(--muted-fg)] line-clamp-2 mt-1">
+                                {proj.description}
+                              </p>
+                            </div>
+
+                            <div className="pt-2">
+                              <div className="flex flex-wrap gap-1 mb-3">
+                                {proj.tags?.slice(0, 3).map((tag, tIdx) => (
+                                  <span
+                                    key={tIdx}
+                                    className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[var(--muted)] text-[var(--muted-fg)]"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+
+                              <div className="flex items-center gap-2 pt-1 border-t border-[var(--border)] text-xs">
+                                {proj.liveUrl && (
+                                  <a
+                                    href={proj.liveUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 hover:underline"
+                                  >
+                                    <span>Demo</span>
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                                {proj.githubUrl && (
+                                  <a
+                                    href={proj.githubUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-[var(--muted-fg)] hover:text-[var(--foreground)] ml-auto"
+                                  >
+                                    <span>Code</span>
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>
