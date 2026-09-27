@@ -603,12 +603,14 @@ const Skiper30 = ({ className = "" }: Skiper30Props) => {
   });
 
   const { height } = dimension;
+  const isMobile = dimension.width < 1024;
   // Parallax transform channels with distinct travel speeds
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, height * 0.35]);
-  const y2 = useTransform(scrollYProgress, [0, 1], [0, height * 0.75]);
-  const y3 = useTransform(scrollYProgress, [0, 1], [0, height * 0.25]);
-  const y4 = useTransform(scrollYProgress, [0, 1], [0, height * 0.65]);
-  const y5 = useTransform(scrollYProgress, [0, 1], [0, height * 0.45]);
+  // Reduced travel on mobile to prevent excessive scrolling
+  const y1 = useTransform(scrollYProgress, [0, 1], [0, height * (isMobile ? 0.45 : 0.7)]);
+  const y2 = useTransform(scrollYProgress, [0, 1], [0, height * (isMobile ? 0.8 : 1.4)]);
+  const y3 = useTransform(scrollYProgress, [0, 1], [0, height * (isMobile ? 0.35 : 0.5)]);
+  const y4 = useTransform(scrollYProgress, [0, 1], [0, height * 1.2]);
+  const y5 = useTransform(scrollYProgress, [0, 1], [0, height * 0.9]);
 
   useEffect(() => {
     const lenis = new Lenis({
@@ -643,57 +645,33 @@ const Skiper30 = ({ className = "" }: Skiper30Props) => {
   return (
     <section
       ref={sectionRef}
-      id="skills"
+      id="skills-showcase"
       className={`relative w-full bg-[var(--section-alt-bg)] text-[var(--foreground)] scroll-mt-16 ${className}`}
     >
-      {/* Anchor for projects compatibility */}
-      <span id="projects" className="absolute -top-24 pointer-events-none" />
-
-      {/* Section Header */}
-      <div className="relative flex flex-col items-center justify-center text-center px-4 pt-16 sm:pt-24 lg:pt-28 pb-8 sm:pb-12">
-        <div className="flex flex-col items-center gap-3.5 max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card-bg)] px-3.5 py-1.5 text-xs font-medium text-[var(--muted-fg)] shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-            <span>Technical Stack &amp; Tools</span>
-          </div>
-
-          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[var(--foreground)]">
-            Skills &amp; Technologies
-          </h2>
-
-          <p className="text-xs sm:text-sm lg:text-base text-[var(--muted-fg)] max-w-lg px-2">
-            A visual showcase of the programming languages, enterprise frameworks, databases, and developer tools powering my full-stack applications.
-          </p>
-
-          <span className="relative max-w-[14ch] text-[11px] sm:text-xs uppercase tracking-widest text-[var(--muted-fg)] pt-4 after:absolute after:left-1/2 after:top-full after:h-10 after:w-px after:bg-gradient-to-b after:from-neutral-300 after:to-neutral-900 dark:after:from-neutral-600 dark:after:to-neutral-100 after:content-['']">
-            scroll to explore
-          </span>
-        </div>
-      </div>
 
       {/* =========================================================================
           MOBILE & TABLET: Exactly 3 Columns with Compact Cells (< 1024px)
           Decreased cell size, tightly proportioned, zero edge-overflow
           ========================================================================= */}
-      <div className="relative box-border flex lg:hidden h-[95vh] sm:h-[110vh] gap-2 sm:gap-3 overflow-hidden bg-[var(--background)] px-2.5 sm:px-4 py-2 justify-center items-start">
+      <div className="relative box-border flex lg:hidden h-[85vh] sm:h-[95vh] gap-2 sm:gap-3 overflow-hidden bg-[var(--background)] px-2.5 sm:px-4 py-2 justify-center items-start">
         <SkillColumn
           skills={MOBILE_COLS[0]}
           y={y1}
-          topOffset="-top-[12%]"
+          topOffset="-top-[8%]"
           className="flex-1 max-w-[105px] sm:max-w-[125px]"
           isCompact={true}
         />
         <SkillColumn
           skills={MOBILE_COLS[1]}
           y={y2}
-          topOffset="-top-[32%]"
+          topOffset="-top-[22%]"
           className="flex-1 max-w-[105px] sm:max-w-[125px]"
           isCompact={true}
         />
         <SkillColumn
           skills={MOBILE_COLS[2]}
           y={y3}
-          topOffset="-top-[18%]"
+          topOffset="-top-[12%]"
           className="flex-1 max-w-[105px] sm:max-w-[125px]"
           isCompact={true}
         />
@@ -740,12 +718,7 @@ const Skiper30 = ({ className = "" }: Skiper30Props) => {
         />
       </div>
 
-      {/* Outro spacer */}
-      <div className="relative flex items-center justify-center text-center py-16 sm:py-20 bg-[var(--section-alt-bg)]">
-        <span className="relative max-w-[14ch] text-xs uppercase tracking-widest text-[var(--muted-fg)] after:absolute after:left-1/2 after:top-full after:h-10 after:w-px after:bg-gradient-to-b after:from-neutral-300 after:to-neutral-900 dark:after:from-neutral-600 dark:after:to-neutral-100 after:content-['']">
-          scroll to explore
-        </span>
-      </div>
+
     </section>
   );
 };

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { usePortfolioContent } from "@/context/PortfolioContentContext";
 
 export interface NavItem {
   label: string;
@@ -21,8 +22,8 @@ export interface SpotlightNavbarProps {
 const DEFAULT_PORTFOLIO_ITEMS: NavItem[] = [
   { label: "Home", href: "#home" },
   { label: "About", href: "#about" },
-  { label: "Projects", href: "#projects" },
   { label: "Skills", href: "#skills" },
+  { label: "Projects", href: "#projects" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -32,6 +33,8 @@ export function SpotlightNavbar({
   onItemClick,
   defaultActiveIndex = 0,
 }: SpotlightNavbarProps) {
+  const { content } = usePortfolioContent();
+  const brandName = content.navbar?.brandName || "Jayanth Sai Chikkala";
   const [activeIndex, setActiveIndex] = useState(defaultActiveIndex);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -59,18 +62,48 @@ export function SpotlightNavbar({
 
       lastScrollY.current = currentScrollY;
 
-      // Section spy
-      const sectionIds = items.map((item) => item.href.replace("#", ""));
+      // Monitored sections mapping to navigation tabs in order from top to bottom
+      // Section 3 (#skills) & Section 4 (#skills-showcase) both represent the Skills tab (starting at Section 3)
+      const sectionTargets: { id: string; targetHref: string }[] = [
+        { id: "home", targetHref: "#home" },
+        { id: "about", targetHref: "#about" },
+        { id: "skills", targetHref: "#skills" },
+        { id: "skills-showcase", targetHref: "#skills" },
+        { id: "projects", targetHref: "#projects" },
+        { id: "contact", targetHref: "#contact" },
+      ];
+
       const scrollPos = currentScrollY + 220;
 
-      for (let i = sectionIds.length - 1; i >= 0; i--) {
-        const id = sectionIds[i];
-        const el = document.getElementById(id);
-        if (el) {
-          const top = el.offsetTop;
-          if (scrollPos >= top) {
-            setActiveIndex(i);
-            break;
+      // Check if user is at the bottom of the page
+      const isAtBottom =
+        window.innerHeight + currentScrollY >= document.documentElement.scrollHeight - 60;
+
+      if (isAtBottom) {
+        for (let i = sectionTargets.length - 1; i >= 0; i--) {
+          const target = sectionTargets[i];
+          const el = document.getElementById(target.id);
+          if (el) {
+            const itemIdx = items.findIndex((item) => item.href === target.targetHref);
+            if (itemIdx !== -1) {
+              setActiveIndex(itemIdx);
+              break;
+            }
+          }
+        }
+      } else {
+        for (let i = sectionTargets.length - 1; i >= 0; i--) {
+          const target = sectionTargets[i];
+          const el = document.getElementById(target.id);
+          if (el) {
+            const top = el.getBoundingClientRect().top + currentScrollY;
+            if (scrollPos >= top) {
+              const itemIdx = items.findIndex((item) => item.href === target.targetHref);
+              if (itemIdx !== -1) {
+                setActiveIndex(itemIdx);
+                break;
+              }
+            }
           }
         }
       }
@@ -108,12 +141,13 @@ export function SpotlightNavbar({
       {/* Main Wide Navbar Container */}
       <nav
         className={cn(
-          "w-full h-16 sm:h-18 px-4 sm:px-6 lg:px-8 flex items-center justify-between",
+          "w-full h-14 sm:h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between",
           "rounded-2xl sm:rounded-full transition-all duration-300",
           "bg-[var(--card-bg)]/90 dark:bg-[#0c0c0e]/90 backdrop-blur-2xl",
-          "border border-[var(--border)] dark:border-zinc-800/90",
-          "shadow-[0_10px_35px_-5px_rgba(0,0,0,0.08),0_4px_12px_-2px_rgba(0,0,0,0.04)] dark:shadow-[0_12px_45px_-5px_rgba(0,0,0,0.7)]",
-          scrolled ? "border-amber-500/25 shadow-amber-500/5 ring-1 ring-amber-500/10" : ""
+          "border border-amber-400/30 dark:border-amber-500/20",
+          "shadow-[0_0_15px_-3px_rgba(234,179,8,0.15),0_0_6px_-1px_rgba(234,179,8,0.1)] dark:shadow-[0_0_20px_-3px_rgba(234,179,8,0.12),0_0_8px_-1px_rgba(234,179,8,0.08)]",
+          "ring-1 ring-amber-400/20 dark:ring-amber-500/15",
+          scrolled ? "border-amber-400/50 dark:border-amber-500/35 shadow-[0_0_25px_-3px_rgba(234,179,8,0.25),0_0_10px_-1px_rgba(234,179,8,0.15)] dark:shadow-[0_0_30px_-3px_rgba(234,179,8,0.2),0_0_12px_-1px_rgba(234,179,8,0.12)] ring-amber-400/30 dark:ring-amber-500/25" : ""
         )}
       >
         {/* Left Side Edge: Signature "Jayanth Sai Chikkala" in Yellow */}
@@ -128,7 +162,7 @@ export function SpotlightNavbar({
             aria-label="Jayanth Sai Chikkala - Home"
           >
             <span className="font-signature text-2xl sm:text-3xl lg:text-[32px] font-bold text-amber-500 dark:text-amber-400 tracking-wide transition-all duration-200 group-hover:text-amber-400 dark:group-hover:text-amber-300 drop-shadow-xs">
-              Jayanth Sai Chikkala
+              {brandName}
             </span>
           </a>
         </div>
@@ -155,7 +189,7 @@ export function SpotlightNavbar({
                   className={cn(
                     "relative z-10 px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition-colors duration-200 block select-none cursor-pointer",
                     isActive
-                      ? "text-[var(--foreground)] font-bold"
+                      ? "text-zinc-950 dark:text-amber-400 font-bold"
                       : "text-[var(--muted-fg)] hover:text-[var(--foreground)]"
                   )}
                 >
@@ -167,7 +201,7 @@ export function SpotlightNavbar({
                   <motion.div
                     layoutId="navbar-active-pill"
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    className="absolute inset-0 bg-white dark:bg-zinc-800 rounded-full shadow-xs border border-[var(--border)] dark:border-zinc-700/80 z-0"
+                    className="absolute inset-0 bg-white dark:bg-zinc-800/95 rounded-full shadow-xs border border-[var(--border)] dark:border-amber-500/30 dark:shadow-[0_0_12px_rgba(245,158,11,0.15)] z-0"
                   />
                 )}
 

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #09090b;
@@ -181,5 +183,73 @@ div[data-nextjs-dev-indicator] {
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
+}
+
+/* ── Loading Screen Animations ── */
+@keyframes hex-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes hex-dash {
+  0%   { stroke-dashoffset: 220; }
+  50%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -220; }
+}
+
+@keyframes name-pulse {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
+
+@keyframes tagline-fade-in {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.loading-hex-spinner {
+  animation: hex-spin 3s linear infinite;
+}
+
+.loading-hex-path {
+  stroke-dasharray: 220;
+  animation: hex-dash 2s ease-in-out infinite;
+}
+
+.loading-name-pulse {
+  animation: name-pulse 2s ease-in-out infinite;
+}
+
+.loading-tagline-fade {
+  animation: tagline-fade-in 0.8s ease-out 0.3s both;
+}
+
+/* ID Card Hanging / Swinging Animation */
+@keyframes id-card-swing {
+  0%    { transform: rotate(0deg); }
+  25%   { transform: rotate(2.5deg); }
+  50%   { transform: rotate(0deg); }
+  75%   { transform: rotate(-2.5deg); }
+  100%  { transform: rotate(0deg); }
+}
+
+@keyframes id-card-entry-swing {
+  0%    { transform: rotate(-6deg); opacity: 0; }
+  20%   { transform: rotate(4deg); opacity: 1; }
+  40%   { transform: rotate(-3deg); }
+  60%   { transform: rotate(2deg); }
+  80%   { transform: rotate(-1deg); }
+  100%  { transform: rotate(0deg); }
+}
+
+.id-card-hanging {
+  transform-origin: top center;
+  animation: id-card-entry-swing 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both,
+             id-card-swing 5s ease-in-out 1.2s infinite;
+}
+
+.id-card-hanging:hover {
+  animation: id-card-entry-swing 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both,
+             id-card-swing 3s ease-in-out infinite;
 }
 

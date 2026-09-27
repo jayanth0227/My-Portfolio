@@ -97,7 +97,7 @@ export const AnimatedSpan = ({
       initial={{ opacity: 0, y: -5 }}
       animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: -5 }}
       transition={{ duration: 0.3, delay: sequence ? 0 : delay / 1000 }}
-      className={cn("grid text-sm font-normal tracking-tight", className)}
+      className={cn("grid text-xs sm:text-sm font-normal tracking-tight break-words whitespace-pre-wrap", className)}
       onAnimationComplete={() => {
         if (!sequence) return
         if (itemIndex === null) return
@@ -218,7 +218,7 @@ export const TypingAnimation = ({
   return (
     <MotionComponent
       ref={elementRef}
-      className={cn("text-sm font-normal tracking-tight", className)}
+      className={cn("text-xs sm:text-sm font-normal tracking-tight break-words whitespace-pre-wrap", className)}
       {...props}
     >
       {displayedText}
@@ -284,8 +284,8 @@ export const Terminal = ({
           <div className="h-2 w-2 rounded-full bg-green-500"></div>
         </div>
       </div>
-      <pre className="p-4">
-        <code className="grid gap-y-1 overflow-auto">{wrappedChildren}</code>
+      <pre className="p-3.5 sm:p-4 whitespace-pre-wrap break-words font-mono">
+        <code className="grid gap-y-1 sm:gap-y-1.5 overflow-x-hidden">{wrappedChildren}</code>
       </pre>
     </div>
   )

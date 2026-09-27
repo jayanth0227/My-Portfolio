@@ -15,24 +15,40 @@ export interface CloudinaryUploadResult {
   format?: string;
 }
 
+export interface UploadMediaOptions {
+  folder?: string;
+  resourceType?: "auto" | "image" | "raw" | "video";
+}
+
 /**
- * Uploads a base64 or buffer image string to Cloudinary
+ * Uploads a base64 or buffer media string (images, PDFs, videos, documents) to Cloudinary
  */
-export async function uploadImageToCloudinary(
+export async function uploadMediaToCloudinary(
   fileDataUri: string,
-  folder: string = "portfolio"
+  options?: string | UploadMediaOptions
 ): Promise<CloudinaryUploadResult> {
   if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
     throw new Error("Cloudinary credentials are not configured in environment variables.");
   }
 
-  const result: UploadApiResponse = await cloudinary.uploader.upload(fileDataUri, {
+  const folder = typeof options === "string" ? options : options?.folder || "portfolio";
+  const explicitType = typeof options === "object" ? options?.resourceType : undefined;
+
+  // Detect if PDF or non-image
+  const isPdf = fileDataUri.startsWith("data:application/pdf") || fileDataUri.includes(".pdf");
+  const resource_type = explicitType || (isPdf ? "auto" : "auto");
+
+  // Only apply image transformations if not a PDF / raw document
+  const uploadOptions: Record<string, unknown> = {
     folder,
-    resource_type: "auto",
-    transformation: [
-      { quality: "auto", fetch_format: "auto" }
-    ],
-  });
+    resource_type,
+  };
+
+  if (!isPdf && (!explicitType || explicitType === "image")) {
+    uploadOptions.transformation = [{ quality: "auto", fetch_format: "auto" }];
+  }
+
+  const result: UploadApiResponse = await cloudinary.uploader.upload(fileDataUri, uploadOptions);
 
   return {
     publicId: result.public_id,
@@ -42,6 +58,9 @@ export async function uploadImageToCloudinary(
     format: result.format,
   };
 }
+
+// Backward compatibility alias
+export const uploadImageToCloudinary = uploadMediaToCloudinary;
 
 /**
  * Deletes an asset by public ID

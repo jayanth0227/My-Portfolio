@@ -5,16 +5,22 @@ import Image from "next/image";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
   ArrowUpRight,
-  Hexagon,
-  Check,
+  Building2,
+  Phone,
+  Droplets,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import {
   AnimatedSpan,
   Terminal,
   TypingAnimation,
 } from "@/components/ui/terminal";
+import { usePortfolioContent } from "@/context/PortfolioContentContext";
 
 export default function About() {
+  const { content } = usePortfolioContent();
+  const about = content.about;
+
   // Smooth 3D Tilt Card Interaction (Hardware accelerated)
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
@@ -50,6 +56,7 @@ export default function About() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         {/* LEFT COLUMN: ID Card Matching Reference Exactly */}
         <div className="lg:col-span-5 flex flex-col items-center justify-center">
+          <div className="id-card-hanging">
           {/* Lanyard Top Fixture (Matching Mustard Strap & Metal Swivel Clip) */}
           <div className="relative flex flex-col items-center pointer-events-none z-20 -mb-2.5 sm:-mb-3">
             {/* Mustard Fabric Lanyard Ribbon */}
@@ -91,19 +98,26 @@ export default function About() {
               <div className="w-8 sm:w-9 h-1 rounded-full bg-neutral-400/70 dark:bg-neutral-500/70" />
             </div>
 
-            {/* Card Content Header: Logo & Company Name */}
+            {/* Card Content Header: Company Logo & Name */}
             <div className="pt-2.5 sm:pt-3 px-5 sm:px-6 flex items-center justify-center gap-2 sm:gap-2.5">
-              {/* Golden Hexagon Checkmark Logo */}
-              <div className="relative flex items-center justify-center text-[var(--accent)]">
-                <Hexagon className="h-7 w-7 sm:h-8 sm:w-8 stroke-[2.2] fill-[var(--accent-light)] text-[var(--accent)]" />
-                <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 stroke-[3] text-[var(--accent)] absolute" />
+              {/* Company Building Icon / Uploaded Logo */}
+              <div className="relative flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-lg bg-[var(--accent)]/15 border border-[var(--accent)]/30 overflow-hidden p-1">
+                {about?.companyLogoUrl ? (
+                  <img
+                    src={about.companyLogoUrl}
+                    alt="Company Logo"
+                    className="h-full w-full object-contain"
+                  />
+                ) : (
+                  <Building2 className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-[var(--accent)]" />
+                )}
               </div>
               <div className="flex flex-col leading-none">
                 <span className="text-[11px] sm:text-[12px] font-bold tracking-wider text-[var(--foreground)] uppercase">
-                  JAYANTH
+                  {about?.companyLine1 || "SPESHWAY"}
                 </span>
                 <span className="text-[12px] sm:text-[13px] font-black tracking-widest text-[var(--accent)] uppercase">
-                  PORTFOLIO
+                  {about?.companyLine2 || "SOLUTIONS"}
                 </span>
               </div>
             </div>
@@ -113,8 +127,8 @@ export default function About() {
               <div className="relative p-1 rounded-full border-2 border-[var(--accent)] shadow-xs">
                 <div className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full overflow-hidden bg-[var(--muted)]">
                   <Image
-                    src="/id-avatar.webp"
-                    alt="Jayanth Sai Chikkala Avatar"
+                    src={about?.idCardPhotoUrl || "/id-avatar.webp"}
+                    alt={`${about?.fullName || "Developer"} ID Photo`}
                     fill
                     sizes="110px"
                     priority
@@ -127,91 +141,61 @@ export default function About() {
             {/* Name & Designation */}
             <div className="mt-3 text-center px-3 sm:px-4">
               <h3 className="text-base sm:text-lg font-black text-[var(--foreground)] tracking-tight uppercase leading-tight">
-                JAYANTH SAI CHIKKALA
+                {about?.fullName || "JAYANTH SAI CHIKKALA"}
               </h3>
               <p className="mt-0.5 text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-[var(--accent)]">
-                SOFTWARE DEVELOPER
+                {about?.designation || "ASSOCIATE SOFTWARE ENGINEER"}
               </p>
             </div>
 
-            {/* ID Credentials Table */}
-            <div className="mt-3 sm:mt-4 px-5 sm:px-6 space-y-1 sm:space-y-1.5 text-[10px] sm:text-xs font-mono">
+            {/* Contact & Personal Info */}
+            <div className="mt-3 sm:mt-4 px-5 sm:px-6 space-y-1.5 sm:space-y-2 text-[10px] sm:text-xs font-mono">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-[var(--foreground)] tracking-wider">ID NUMBER</span>
-                <span className="font-black text-[var(--foreground)] tracking-wide">987654321</span>
+                <span className="font-bold text-[var(--foreground)] tracking-wider flex items-center gap-1.5">
+                  <Phone className="h-3 w-3 text-[var(--accent)]" />
+                  MOBILE
+                </span>
+                <span className="font-black text-[var(--foreground)] tracking-wide">
+                  {about?.mobile || "+91 9010253076"}
+                </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-bold text-[var(--foreground)] tracking-wider">VALID THROUGH</span>
-                <span className="font-black text-[var(--foreground)] tracking-wide">12/31/2026</span>
+                <span className="font-bold text-[var(--foreground)] tracking-wider flex items-center gap-1.5">
+                  <Droplets className="h-3 w-3 text-red-500" />
+                  BLOOD GROUP
+                </span>
+                <span className="font-black text-[var(--foreground)] tracking-wide">
+                  {about?.bloodGroup || "O+"}
+                </span>
               </div>
             </div>
 
-            {/* Bottom Mustard/Gold Accent Block with Inset QR Code */}
-            <div className="mt-4 sm:mt-5 bg-gradient-to-r from-[#d97706] to-[var(--accent)] px-5 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between">
-              {/* Left detail on the banner */}
-              <div className="flex flex-col text-white">
-                <span className="text-[8px] sm:text-[9px] font-mono tracking-widest uppercase opacity-85">
-                  STATUS
+            {/* Bottom Mustard/Gold Accent Block with Employee Badge & LinkedIn QR Code */}
+            <div className="mt-4 sm:mt-5 bg-gradient-to-r from-[#d97706] to-[var(--accent)] px-3.5 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 overflow-hidden rounded-b-3xl">
+              {/* Left: Employee Badge & Department */}
+              <div className="flex flex-col text-white min-w-0 flex-1 pr-1 justify-center">
+                <span className="text-[7.5px] sm:text-[8.5px] font-mono font-bold tracking-widest uppercase opacity-90 truncate leading-none mb-0.5">
+                  {about?.footerRole || "EMPLOYEE"}
                 </span>
-                <span className="text-[10px] sm:text-[11px] font-bold tracking-wider uppercase">
-                  VERIFIED DEV
+                <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight uppercase leading-snug break-words">
+                  {about?.footerDepartment || "SOFTWARE DEVELOPMENT"}
                 </span>
               </div>
 
-              {/* White Inset QR Code Matching Reference */}
-              <div className="bg-white p-1 rounded-md shadow-xs">
-                <svg
-                  className="w-9 h-9 sm:w-11 sm:h-11 text-neutral-900"
-                  viewBox="0 0 29 29"
-                  fill="currentColor"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  {/* Position Patterns */}
-                  <rect x="1" y="1" width="7" height="7" fill="black" />
-                  <rect x="2" y="2" width="5" height="5" fill="white" />
-                  <rect x="3" y="3" width="3" height="3" fill="black" />
-                  <rect x="21" y="1" width="7" height="7" fill="black" />
-                  <rect x="22" y="2" width="5" height="5" fill="white" />
-                  <rect x="23" y="3" width="3" height="3" fill="black" />
-                  <rect x="1" y="21" width="7" height="7" fill="black" />
-                  <rect x="2" y="22" width="5" height="5" fill="white" />
-                  <rect x="3" y="23" width="3" height="3" fill="black" />
-                  {/* QR Data Pattern */}
-                  <rect x="10" y="2" width="2" height="2" fill="black" />
-                  <rect x="14" y="1" width="2" height="3" fill="black" />
-                  <rect x="18" y="2" width="2" height="2" fill="black" />
-                  <rect x="10" y="6" width="3" height="2" fill="black" />
-                  <rect x="15" y="6" width="2" height="2" fill="black" />
-                  <rect x="10" y="10" width="2" height="2" fill="black" />
-                  <rect x="13" y="10" width="3" height="2" fill="black" />
-                  <rect x="17" y="10" width="2" height="3" fill="black" />
-                  <rect x="21" y="10" width="3" height="2" fill="black" />
-                  <rect x="26" y="10" width="2" height="2" fill="black" />
-                  <rect x="1" y="10" width="2" height="3" fill="black" />
-                  <rect x="5" y="10" width="2" height="2" fill="black" />
-                  <rect x="2" y="15" width="3" height="2" fill="black" />
-                  <rect x="7" y="14" width="2" height="3" fill="black" />
-                  <rect x="11" y="14" width="3" height="2" fill="black" />
-                  <rect x="15" y="14" width="2" height="3" fill="black" />
-                  <rect x="19" y="14" width="3" height="2" fill="black" />
-                  <rect x="24" y="14" width="3" height="2" fill="black" />
-                  <rect x="10" y="18" width="2" height="3" fill="black" />
-                  <rect x="14" y="18" width="3" height="2" fill="black" />
-                  <rect x="19" y="18" width="2" height="3" fill="black" />
-                  <rect x="23" y="18" width="3" height="2" fill="black" />
-                  <rect x="10" y="23" width="3" height="2" fill="black" />
-                  <rect x="15" y="22" width="2" height="3" fill="black" />
-                  <rect x="19" y="23" width="3" height="2" fill="black" />
-                  <rect x="24" y="22" width="2" height="3" fill="black" />
-                  <rect x="10" y="26" width="2" height="2" fill="black" />
-                  <rect x="14" y="26" width="3" height="2" fill="black" />
-                  <rect x="18" y="26" width="2" height="2" fill="black" />
-                  <rect x="22" y="25" width="2" height="3" fill="black" />
-                  <rect x="26" y="26" width="2" height="2" fill="black" />
-                </svg>
+              {/* Right: LinkedIn QR Code */}
+              <div className="bg-white p-1 rounded-md shadow-xs shrink-0 flex items-center justify-center">
+                <QRCodeSVG
+                  value={about?.linkedinUrl || "https://www.linkedin.com/in/jayanth-sai-chikkala/"}
+                  size={32}
+                  bgColor="#ffffff"
+                  fgColor="#171717"
+                  level="L"
+                  className="w-7 h-7 sm:w-8 sm:h-8"
+                />
               </div>
             </div>
           </motion.div>
+          </div>
         </div>
 
         {/* RIGHT COLUMN: Mac Terminal Displaying Developer Introduction */}
@@ -219,12 +203,12 @@ export default function About() {
           {/* Header Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-[var(--badge-border)] bg-[var(--badge-bg)] px-3 py-1 text-xs font-semibold text-[var(--badge-text)] shadow-2xs mb-2 w-fit">
             <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-            <span>Developer Console</span>
+            <span>{about?.terminalBadge || "Developer Console"}</span>
           </div>
 
           {/* Heading */}
           <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-[var(--foreground)] leading-tight mb-3">
-            Building User-Centric, Scalable Solutions Across All Platforms
+            {about?.terminalHeading || "Building User-Centric, Scalable Solutions Across All Platforms"}
           </h2>
 
           {/* Interactive Magic UI Terminal Component */}
@@ -233,41 +217,41 @@ export default function About() {
               <TypingAnimation duration={30}>$ whoami</TypingAnimation>
 
               <AnimatedSpan className="text-emerald-400">
-                ✔ Jayanth Sai Chikkala — Software Developer &amp; Solutions Architect
+                ✔ {about?.terminalWhoami || `${about?.fullName || "Jayanth Sai Chikkala"} — ${about?.designation || "Associate Software Engineer"}`}
               </AnimatedSpan>
 
               <TypingAnimation duration={25}>$ cat about.md</TypingAnimation>
 
               <AnimatedSpan className="text-zinc-300 dark:text-zinc-400">
-                Building user-centric, high-impact digital applications across platforms.
+                {about?.terminalAbout1 || "Building user-centric, high-impact digital applications across platforms."}
               </AnimatedSpan>
 
               <AnimatedSpan className="text-zinc-400 dark:text-zinc-500">
-                Passionate about transforming complex workflows into intuitive, resilient software.
+                {about?.terminalAbout2 || "Passionate about transforming complex workflows into intuitive, resilient software."}
               </AnimatedSpan>
 
               <TypingAnimation duration={25}>$ pnpm run capabilities</TypingAnimation>
 
               <AnimatedSpan className="text-emerald-400">
-                ✔ Web Applications   — High-performance Next.js &amp; React cloud systems
+                ✔ {about?.terminalCapability1 || "Web Applications   — High-performance Next.js & React cloud systems"}
               </AnimatedSpan>
 
               <AnimatedSpan className="text-emerald-400">
-                ✔ Enterprise ERPs    — Scalable workflow engines &amp; operational platforms
+                ✔ {about?.terminalCapability2 || "Enterprise ERPs    — Scalable workflow engines & operational platforms"}
               </AnimatedSpan>
 
               <AnimatedSpan className="text-emerald-400">
-                ✔ Mobile Apps        — Cross-platform iOS &amp; Android apps with fluid UX
+                ✔ {about?.terminalCapability3 || "Mobile Apps        — Cross-platform iOS & Android apps with fluid UX"}
               </AnimatedSpan>
 
               <AnimatedSpan className="text-emerald-400">
-                ✔ Desktop Apps       — Native-grade desktop tools built for stability
+                ✔ {about?.terminalCapability4 || "Desktop Apps       — Native-grade desktop tools built for stability"}
               </AnimatedSpan>
 
               <TypingAnimation duration={25}>$ echo $DEV_STATUS</TypingAnimation>
 
               <AnimatedSpan className="text-amber-400">
-                ▲ Available for New High-Impact Engineering Projects
+                ▲ {about?.terminalStatus || "Available for New High-Impact Engineering Projects"}
               </AnimatedSpan>
             </Terminal>
           </div>
@@ -276,21 +260,21 @@ export default function About() {
           <div className="mt-3.5 sm:mt-4 flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-[var(--border)]">
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span className="inline-flex items-center gap-1 rounded-md bg-[var(--pill-bg)] px-2 py-0.5 text-[10px] sm:text-[11px] font-medium text-[var(--pill-text)]">
-                ⚡ Cloud-Native
+                {about?.terminalPill1 || "⚡ Cloud-Native"}
               </span>
               <span className="inline-flex items-center gap-1 rounded-md bg-[var(--pill-bg)] px-2 py-0.5 text-[10px] sm:text-[11px] font-medium text-[var(--pill-text)]">
-                🔒 Scalable ERP &amp; Systems
+                {about?.terminalPill2 || "🔒 Scalable ERP & Systems"}
               </span>
               <span className="inline-flex items-center gap-1 rounded-md bg-[var(--pill-bg)] px-2 py-0.5 text-[10px] sm:text-[11px] font-medium text-[var(--pill-text)]">
-                🎯 Web • Mobile • Desktop
+                {about?.terminalPill3 || "🎯 Web • Mobile • Desktop"}
               </span>
             </div>
 
             <a
-              href="#contact"
+              href={about?.terminalCtaUrl || "#contact"}
               className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--btn-primary-bg)] px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs font-bold text-[var(--btn-primary-text)] shadow-xs transition-all duration-200 hover:bg-[var(--btn-primary-hover)]"
             >
-              <span>Get In Touch</span>
+              <span>{about?.terminalCtaText || "Get In Touch"}</span>
               <ArrowUpRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </a>
           </div>

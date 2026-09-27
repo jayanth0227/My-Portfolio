@@ -36,6 +36,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "File data is required." }, { status: 400 });
     }
 
+    // If PDF, cache locally to public/resume.pdf so it's instantly accessible
+    if (fileDataUri.startsWith("data:application/pdf") || folder.includes("resumes")) {
+      try {
+        const base64Data = fileDataUri.split(";base64,").pop();
+        if (base64Data) {
+          const fs = await import("fs");
+          const path = await import("path");
+          const publicPath = path.join(process.cwd(), "public", "resume.pdf");
+          fs.writeFileSync(publicPath, Buffer.from(base64Data, "base64"));
+        }
+      } catch (err) {
+        console.warn("Could not cache resume locally:", err);
+      }
+    }
+
     const uploadResult = await uploadImageToCloudinary(fileDataUri, folder);
 
     return NextResponse.json({

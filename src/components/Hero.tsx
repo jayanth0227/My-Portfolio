@@ -5,12 +5,17 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import InteractiveHexagonBackground from "@/components/InteractiveHexagonBackground";
 import { Lens } from "@/components/ui/lens";
+import { usePortfolioContent } from "@/context/PortfolioContentContext";
 
 export default function Hero() {
+  const { content } = usePortfolioContent();
+  const hero = content.hero;
+  const navbar = content.navbar;
+
   return (
     <section
       id="home"
-      className="relative flex min-h-screen lg:min-h-screen w-full items-center justify-center overflow-hidden bg-[var(--background)] px-4 sm:px-6 lg:px-12 pt-28 sm:pt-32 lg:pt-28 pb-6 lg:pb-0"
+      className="relative flex h-dvh w-full items-center justify-center overflow-hidden bg-[var(--background)] px-4 sm:px-6 lg:px-12 pt-20 sm:pt-22 lg:pt-20 pb-4 lg:pb-0"
     >
       {/* Interactive Anti-Gravity Magnetic Field Hexagon Background */}
       <InteractiveHexagonBackground radius={42} strokeDasharray="4 2" />
@@ -22,12 +27,12 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="flex-1 text-center lg:text-left lg:my-auto pt-6 sm:pt-8 lg:pt-4 max-w-2xl"
+          className="flex-1 text-center lg:text-left lg:my-auto pt-2 sm:pt-4 lg:pt-0 max-w-2xl"
         >
           {/* Status badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--muted)] px-3.5 py-1.5 text-xs font-medium text-[var(--muted-fg)] shadow-xs mb-4 sm:mb-6">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Available for New Projects</span>
+            <span>{hero.badgeText || "Available for New Projects"}</span>
           </div>
 
           <div className="py-1 sm:py-2">
@@ -37,28 +42,39 @@ export default function Hero() {
               ariaLabel="Interactive Zoom for Title and Description"
               className="rounded-2xl"
             >
-              <h1 className="text-3xl font-extrabold tracking-tight text-[var(--foreground)] sm:text-5xl lg:text-6xl xl:text-7xl leading-tight">
-                Full-Stack Developer &amp; Cloud Engineer
+              <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl leading-tight">
+                <span className="text-[var(--foreground)]">{hero.titleLine1 || "Building Scalable"}</span>
+                <br />
+                <span className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 dark:from-amber-400 dark:via-yellow-400 dark:to-amber-500 bg-clip-text text-transparent">
+                  {hero.titleLine2 || "Digital Experiences"}
+                </span>
               </h1>
 
-              <p className="mt-3 sm:mt-5 max-w-xl text-sm sm:text-base lg:text-lg text-[var(--muted-fg)] mx-auto lg:mx-0">
-                Building dynamic, cloud-native applications with Next.js, MongoDB, Cloudinary, and continuous deployment on AWS Amplify.
+              <p className="mt-3 sm:mt-5 max-w-xl text-sm sm:text-base lg:text-lg text-[var(--muted-fg)] mx-auto lg:mx-0 leading-relaxed">
+                {hero.description || (
+                  <>
+                    <span className="text-[var(--foreground)] font-medium">Java &amp; Spring Boot</span> Full Stack Developer crafting scalable, production-ready applications with modern frontend technologies, robust backend APIs, cloud infrastructure, and clean architecture.
+                  </>
+                )}
               </p>
             </Lens>
           </div>
 
           <div className="mt-5 sm:mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-4">
             <a
-              href="#projects"
-              className="rounded-xl bg-[var(--btn-primary-bg)] px-6 py-3 text-sm font-semibold text-[var(--btn-primary-text)] shadow-sm hover:bg-[var(--btn-primary-hover)] transition-colors"
+              href="#contact"
+              className="rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-400 px-6 py-3 text-sm font-bold text-zinc-950 shadow-md shadow-amber-500/25 hover:shadow-lg hover:shadow-amber-500/40 hover:brightness-105 active:scale-[0.98] transition-all duration-300"
             >
-              Explore Projects
+              {hero.contactButtonText || "Get In Touch"}
             </a>
             <a
-              href="#contact"
-              className="rounded-xl border border-[var(--btn-secondary-border)] bg-[var(--btn-secondary-bg)] px-6 py-3 text-sm font-semibold text-[var(--btn-secondary-text)] hover:bg-[var(--btn-secondary-hover)] transition-colors shadow-xs"
+              href="/api/resume"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-xl border-[2.5px] border-amber-500 dark:border-amber-400 bg-transparent px-6 py-3 text-sm font-bold text-amber-600 dark:text-amber-400 shadow-xs hover:bg-amber-500/10 hover:border-amber-500 dark:hover:border-amber-300 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
             >
-              Get In Touch
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              {hero.resumeButtonText || "Download CV"}
             </a>
           </div>
         </motion.div>
@@ -78,13 +94,13 @@ export default function Hero() {
 
           <div className="relative z-10 flex items-end justify-center [mask-image:linear-gradient(to_bottom,black_74%,transparent_100%)] lg:[mask-image:none]">
             <Image
-              src="/profile.png"
-              alt="Jayanth Sai Chikkala Portrait"
+              src={hero.avatarUrl || "/profile.png"}
+              alt={`${navbar?.brandName || "Developer"} Portrait`}
               width={1024}
               height={1024}
               priority
               style={{ width: "auto" }}
-              className="h-[36vh] sm:h-[46vh] md:h-[60vh] lg:h-[84vh] xl:h-[90vh] 2xl:h-[94vh] max-h-[880px] object-contain object-bottom drop-shadow-[0_20px_35px_rgba(0,0,0,0.15)] dark:drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] pointer-events-none select-none block"
+              className="h-[42vh] sm:h-[50vh] md:h-[55vh] lg:h-[76vh] xl:h-[80vh] 2xl:h-[84vh] max-h-[800px] object-contain object-bottom drop-shadow-[0_20px_35px_rgba(0,0,0,0.15)] dark:drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] pointer-events-none select-none block"
             />
           </div>
         </motion.div>

@@ -3,6 +3,7 @@ import "./globals.css";
 import { Geist, Caveat } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { PortfolioContentProvider } from "@/context/PortfolioContentContext";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const caveat = Caveat({
@@ -50,7 +51,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <PortfolioContentProvider>{children}</PortfolioContentProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
