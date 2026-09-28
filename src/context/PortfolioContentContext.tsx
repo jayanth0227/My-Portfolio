@@ -23,7 +23,7 @@ export function PortfolioContentProvider({ children }: { children: React.ReactNo
 
   const fetchContent = useCallback(async () => {
     try {
-      const res = await fetch("/api/content", { cache: "no-store" });
+      const res = await fetch(`/api/content?_t=${Date.now()}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.content) {

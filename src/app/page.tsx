@@ -51,7 +51,7 @@ export default function Home() {
         {/* 2nd Section: Interactive Box Grid Background with ID Card & About Info */}
         <section
           id="about"
-          className="relative min-h-screen lg:h-screen w-full overflow-visible lg:overflow-hidden bg-[var(--background)] flex items-center justify-center pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-14 lg:pb-2 scroll-mt-20 lg:scroll-mt-0"
+          className="relative w-full overflow-hidden bg-[var(--background)] flex items-center justify-center pt-16 pb-8 sm:pt-20 sm:pb-10 lg:pt-16 lg:pb-8 scroll-mt-0"
         >
           {/* Interactive Dash Grid Layer */}
           <GridPattern
@@ -71,8 +71,8 @@ export default function Home() {
         <Skiper30 />
 
         {/* 4th & 5th Section Anchors (Projects & Contact) */}
-        <div id="projects" className="scroll-mt-24 pointer-events-none" />
-        <div id="contact" className="scroll-mt-24 pointer-events-none" />
+        <div id="projects" className="scroll-mt-0 pointer-events-none" />
+        <div id="contact" className="scroll-mt-0 pointer-events-none" />
 
         {/* Quick Action: Smooth Scroll to Top Button */}
         <ScrollToTop />

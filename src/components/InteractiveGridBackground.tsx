@@ -149,14 +149,16 @@ export default function InteractiveGridBackground({
     const handleResize = () => {
       if (!canvas) return;
       dpr = Math.min(window.devicePixelRatio || 1, 1.25);
-      canvasW = canvas.parentElement?.clientWidth || window.innerWidth;
-      canvasH = canvas.parentElement?.clientHeight || window.innerHeight;
+      const parent = canvas.parentElement;
+      canvasW = parent ? parent.clientWidth : window.innerWidth;
+      canvasH = parent ? parent.clientHeight : window.innerHeight;
       canvas.width = Math.floor(canvasW * dpr);
       canvas.height = Math.floor(canvasH * dpr);
-      canvas.style.width = `${canvasW}px`;
-      canvas.style.height = `${canvasH}px`;
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
       ctx.scale(dpr, dpr);
-      initGrid(); updateRect();
+      initGrid();
+      updateRect();
       render(performance.now());
     };
 
@@ -266,6 +268,14 @@ export default function InteractiveGridBackground({
       else if (!isVisible && animationFrameId) { cancelAnimationFrame(animationFrameId); isAnimating = false; animationFrameId = 0; }
     }, { threshold: 0.05 });
 
+    let parentResizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && canvas.parentElement) {
+      parentResizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+      parentResizeObserver.observe(canvas.parentElement);
+    }
+
     handleResize();
     window.addEventListener("resize", handleResize);
     window.addEventListener("scroll", updateRect, { passive: true });
@@ -274,7 +284,9 @@ export default function InteractiveGridBackground({
     observer.observe(canvas);
 
     return () => {
-      themeObserver.disconnect(); observer.disconnect();
+      themeObserver.disconnect();
+      observer.disconnect();
+      if (parentResizeObserver) parentResizeObserver.disconnect();
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", updateRect);
       window.removeEventListener("mousemove", handleMouseMove);

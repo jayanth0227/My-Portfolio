@@ -52,7 +52,7 @@ export default function About() {
   };
 
   return (
-    <div className="relative z-10 mx-auto w-full max-w-7xl xl:max-w-[1400px] px-4 sm:px-6 lg:px-10 py-4 sm:py-6 lg:py-8">
+    <div className="relative z-10 mx-auto w-full max-w-7xl xl:max-w-[1400px] px-4 sm:px-6 lg:px-10 py-2 sm:py-3 lg:py-4">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         {/* LEFT COLUMN: ID Card Matching Reference Exactly */}
         <div className="lg:col-span-5 flex flex-col items-center justify-center">

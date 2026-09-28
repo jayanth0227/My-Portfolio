@@ -260,7 +260,7 @@ export default function TechOrbit() {
   return (
     <section
       id="skills"
-      className="relative w-full bg-[var(--background)] py-14 sm:py-18 lg:py-20 overflow-hidden border-t border-[var(--border)]/40 scroll-mt-20 lg:scroll-mt-24"
+      className="relative w-full bg-[var(--background)] pt-10 pb-16 sm:pt-12 sm:pb-20 lg:pt-12 lg:pb-20 overflow-hidden border-t border-[var(--border)]/40 scroll-mt-0"
     >
       {/* Interactive Dash Grid Layer with All Animations */}
       <GridPattern

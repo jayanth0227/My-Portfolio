@@ -317,7 +317,7 @@ export default function AdminPage() {
       setContentForm(updated);
 
       // Auto-persist immediately to MongoDB
-      await fetch("/api/admin/content", {
+      const saveRes = await fetch("/api/admin/content", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -335,6 +335,11 @@ export default function AdminPage() {
           },
         }),
       });
+
+      if (!saveRes.ok) {
+        const errJson = await saveRes.json().catch(() => ({}));
+        throw new Error(errJson.error || "Uploaded to Cloudinary but failed to save to database");
+      }
 
       setContentSaved(true);
       setTimeout(() => setContentSaved(false), 4500);
@@ -365,7 +370,7 @@ export default function AdminPage() {
       setContentForm(updated);
 
       // Auto-persist immediately to MongoDB
-      await fetch("/api/admin/content", {
+      const saveRes = await fetch("/api/admin/content", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -383,6 +388,11 @@ export default function AdminPage() {
           },
         }),
       });
+
+      if (!saveRes.ok) {
+        const errJson = await saveRes.json().catch(() => ({}));
+        throw new Error(errJson.error || "Uploaded resume to Cloudinary but failed to save to database");
+      }
 
       setContentSaved(true);
       setTimeout(() => setContentSaved(false), 4500);
@@ -455,13 +465,18 @@ export default function AdminPage() {
       setAboutForm(updated);
 
       // Auto-persist immediately to MongoDB
-      await fetch("/api/admin/content", {
+      const saveRes = await fetch("/api/admin/content", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           about: updated,
         }),
       });
+
+      if (!saveRes.ok) {
+        const errJson = await saveRes.json().catch(() => ({}));
+        throw new Error(errJson.error || "Uploaded ID photo to Cloudinary but failed to save to database");
+      }
 
       setAboutSaved(true);
       setTimeout(() => setAboutSaved(false), 4500);
@@ -488,13 +503,18 @@ export default function AdminPage() {
       setAboutForm(updated);
 
       // Auto-persist immediately to MongoDB
-      await fetch("/api/admin/content", {
+      const saveRes = await fetch("/api/admin/content", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           about: updated,
         }),
       });
+
+      if (!saveRes.ok) {
+        const errJson = await saveRes.json().catch(() => ({}));
+        throw new Error(errJson.error || "Uploaded logo to Cloudinary but failed to save to database");
+      }
 
       setAboutSaved(true);
       setTimeout(() => setAboutSaved(false), 4500);

@@ -42,11 +42,28 @@ export function SpotlightNavbar({
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
 
+  const isNavigatingRef = useRef(false);
+  const navigationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Track scroll position: scroll direction hide/show & active section spy
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       setScrolled(currentScrollY > 20);
+
+      // Do not hide navbar while click navigation is actively smooth scrolling
+      if (isNavigatingRef.current) {
+        lastScrollY.current = currentScrollY;
+        return;
+      }
 
       // Hide navbar when scrolling down, show when scrolling up or at top
       if (currentScrollY <= 80) {
@@ -119,11 +136,25 @@ export function SpotlightNavbar({
     onItemClick?.(item, index);
     if (item.href.startsWith("#")) {
       const targetId = item.href.slice(1);
-      const targetEl = document.getElementById(targetId);
-      if (targetEl) {
-        targetEl.scrollIntoView({ behavior: "smooth" });
-      } else if (targetId === "home") {
+
+      // Keep navbar visible during user click navigation
+      setIsVisible(true);
+      isNavigatingRef.current = true;
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+      navigationTimeoutRef.current = setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 900);
+
+      if (targetId === "home") {
         window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          const targetY = targetEl.getBoundingClientRect().top + window.scrollY;
+          window.scrollTo({ top: targetY, behavior: "smooth" });
+        }
       }
     }
   };
@@ -141,7 +172,7 @@ export function SpotlightNavbar({
       {/* Main Wide Navbar Container */}
       <nav
         className={cn(
-          "w-full h-14 sm:h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between",
+          "w-full h-11 sm:h-12 px-3.5 sm:px-5 lg:px-6 flex items-center justify-between",
           "rounded-2xl sm:rounded-full transition-all duration-300",
           "bg-[var(--card-bg)]/90 dark:bg-[#0c0c0e]/90 backdrop-blur-2xl",
           "border border-amber-400/30 dark:border-amber-500/20",
@@ -158,17 +189,17 @@ export function SpotlightNavbar({
               e.preventDefault();
               handleItemClick(items[0], 0);
             }}
-            className="group flex items-center gap-1.5 select-none cursor-pointer py-1"
+            className="group flex items-center gap-1.5 select-none cursor-pointer py-0.5"
             aria-label="Jayanth Sai Chikkala - Home"
           >
-            <span className="font-signature text-2xl sm:text-3xl lg:text-[32px] font-bold text-amber-500 dark:text-amber-400 tracking-wide transition-all duration-200 group-hover:text-amber-400 dark:group-hover:text-amber-300 drop-shadow-xs">
+            <span className="font-signature text-xl sm:text-2xl lg:text-[25px] font-bold text-amber-500 dark:text-amber-400 tracking-wide transition-all duration-200 group-hover:text-amber-400 dark:group-hover:text-amber-300 drop-shadow-xs">
               {brandName}
             </span>
           </a>
         </div>
 
         {/* Center: Navigation Tabs (Desktop & Tablet) */}
-        <ul className="hidden md:flex items-center gap-1 p-1.5 rounded-full bg-[var(--muted)]/80 dark:bg-zinc-900/80 border border-[var(--border)] dark:border-zinc-800/80 relative">
+        <ul className="hidden md:flex items-center gap-0.5 p-1 rounded-full bg-[var(--muted)]/80 dark:bg-zinc-900/80 border border-[var(--border)] dark:border-zinc-800/80 relative">
           {items.map((item, idx) => {
             const isActive = activeIndex === idx;
             const isHovered = hoverIndex === idx;
@@ -187,7 +218,7 @@ export function SpotlightNavbar({
                     handleItemClick(item, idx);
                   }}
                   className={cn(
-                    "relative z-10 px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition-colors duration-200 block select-none cursor-pointer",
+                    "relative z-10 px-3 py-1 sm:px-3.5 sm:py-1 text-xs font-semibold rounded-full transition-colors duration-200 block select-none cursor-pointer leading-tight",
                     isActive
                       ? "text-zinc-950 dark:text-amber-400 font-bold"
                       : "text-[var(--muted-fg)] hover:text-[var(--foreground)]"
@@ -219,19 +250,19 @@ export function SpotlightNavbar({
         </ul>
 
         {/* Right Side Edge: Theme Toggle & Mobile Menu Button */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          <div className="flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 rounded-full border border-[var(--border)] dark:border-zinc-800/80 bg-[var(--muted)]/60 dark:bg-zinc-900/80 hover:border-amber-500/40 hover:bg-[var(--muted)] dark:hover:bg-zinc-900 transition-colors shadow-xs">
-            <AnimatedThemeToggler size={38} />
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center justify-center h-8 w-8 sm:h-8.5 sm:w-8.5 rounded-full border border-[var(--border)] dark:border-zinc-800/80 bg-[var(--muted)]/60 dark:bg-zinc-900/80 hover:border-amber-500/40 hover:bg-[var(--muted)] dark:hover:bg-zinc-900 transition-colors shadow-xs">
+            <AnimatedThemeToggler size={28} />
           </div>
 
           {/* Mobile Menu Button (Small Screens) */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden flex items-center justify-center h-10 w-10 rounded-full border border-[var(--border)] dark:border-zinc-800/80 bg-[var(--muted)]/60 dark:bg-zinc-900/80 text-[var(--foreground)] hover:text-amber-500 transition-colors"
+            className="md:hidden flex items-center justify-center h-8 w-8 sm:h-8.5 sm:w-8.5 rounded-full border border-[var(--border)] dark:border-zinc-800/80 bg-[var(--muted)]/60 dark:bg-zinc-900/80 text-[var(--foreground)] hover:text-amber-500 transition-colors"
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
       </nav>
