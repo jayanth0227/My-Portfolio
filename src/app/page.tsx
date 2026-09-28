@@ -8,6 +8,7 @@ import TechOrbit from "@/components/TechOrbit";
 import { GridPattern } from "@/components/ui/grid-pattern";
 import { SpotlightNavbar } from "@/components/ui/spotlight-navbar";
 import { Skiper30 } from "@/components/Skiper30";
+import Projects from "@/components/Projects";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 
 export default function Home() {
@@ -70,8 +71,10 @@ export default function Home() {
         {/* 4th Section: Skills (Part 2 - Parallax Showcase Gallery of 30 Skills) */}
         <Skiper30 />
 
-        {/* 4th & 5th Section Anchors (Projects & Contact) */}
-        <div id="projects" className="scroll-mt-0 pointer-events-none" />
+        {/* 5th Section: Portfolio Projects Showcase */}
+        <Projects />
+
+        {/* 6th Section Anchor (Contact) */}
         <div id="contact" className="scroll-mt-0 pointer-events-none" />
 
         {/* Quick Action: Smooth Scroll to Top Button */}

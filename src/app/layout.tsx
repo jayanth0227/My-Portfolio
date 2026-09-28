@@ -1,11 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Geist, Caveat } from "next/font/google";
+import { Poppins, Caveat } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PortfolioContentProvider } from "@/context/PortfolioContentContext";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-poppins",
+  display: "swap",
+});
 const caveat = Caveat({
   subsets: ["latin"],
   weight: ["600", "700"],
@@ -30,7 +35,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("font-sans", geist.variable, caveat.variable)}
+      className={cn("font-sans", poppins.variable, caveat.variable)}
       suppressHydrationWarning
     >
       <head>

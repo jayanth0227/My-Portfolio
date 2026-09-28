@@ -32,6 +32,15 @@ import {
   QrCode,
   Type,
   Terminal as TerminalIcon,
+  Plus,
+  Trash2,
+  Pencil,
+  X,
+  Star,
+  Globe,
+  Code2,
+  Tag,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,12 +70,15 @@ interface MessageItem {
 interface ProjectItem {
   _id?: string;
   title: string;
+  category?: string;
   description: string;
   tags: string[];
   imageUrl: string;
+  cloudinaryPublicId?: string;
   liveUrl?: string;
   githubUrl?: string;
   featured?: boolean;
+  order?: number;
 }
 
 export default function AdminPage() {
@@ -143,6 +155,193 @@ export default function AdminPage() {
   const [uploadingIdPhoto, setUploadingIdPhoto] = useState(false);
   const [uploadingCompanyLogo, setUploadingCompanyLogo] = useState(false);
   const [aboutUploadError, setAboutUploadError] = useState<string | null>(null);
+
+  // Project CMS State
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [projectForm, setProjectForm] = useState({
+    title: "",
+    category: "Full-Stack",
+    description: "",
+    tagsInput: "",
+    imageUrl: "",
+    cloudinaryPublicId: "",
+    liveUrl: "",
+    githubUrl: "",
+    featured: false,
+    order: 0,
+  });
+  const [savingProject, setSavingProject] = useState(false);
+  const [projectSavedMessage, setProjectSavedMessage] = useState<string | null>(null);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const [uploadingProjectImage, setUploadingProjectImage] = useState(false);
+  const [projectImageUploadError, setProjectImageUploadError] = useState<string | null>(null);
+  const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
+
+  const handleOpenCreateProject = () => {
+    setEditingProjectId(null);
+    setProjectForm({
+      title: "",
+      category: "Full-Stack",
+      description: "",
+      tagsInput: "",
+      imageUrl: "",
+      cloudinaryPublicId: "",
+      liveUrl: "",
+      githubUrl: "",
+      featured: false,
+      order: projects.length + 1,
+    });
+    setProjectError(null);
+    setProjectImageUploadError(null);
+    setShowProjectModal(true);
+  };
+
+  const handleOpenEditProject = (project: ProjectItem) => {
+    setEditingProjectId(project._id || null);
+    setProjectForm({
+      title: project.title,
+      category: project.category || "Full-Stack",
+      description: project.description,
+      tagsInput: project.tags ? project.tags.join(", ") : "",
+      imageUrl: project.imageUrl,
+      cloudinaryPublicId: project.cloudinaryPublicId || "",
+      liveUrl: project.liveUrl || "",
+      githubUrl: project.githubUrl || "",
+      featured: Boolean(project.featured),
+      order: project.order ?? 0,
+    });
+    setProjectError(null);
+    setProjectImageUploadError(null);
+    setShowProjectModal(true);
+  };
+
+  const onProjectImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingProjectImage(true);
+    setProjectImageUploadError(null);
+    try {
+      const res = await handleUploadFile(file, "portfolio/projects");
+      setProjectForm((prev) => ({
+        ...prev,
+        imageUrl: res.url,
+        cloudinaryPublicId: res.publicId,
+      }));
+    } catch (err: unknown) {
+      setProjectImageUploadError(
+        err instanceof Error ? err.message : "Failed to upload project image to Cloudinary"
+      );
+    } finally {
+      setUploadingProjectImage(false);
+    }
+  };
+
+  const handleSaveProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingProject(true);
+    setProjectError(null);
+
+    try {
+      if (!projectForm.title.trim()) {
+        throw new Error("Project title is required");
+      }
+      if (!projectForm.description.trim()) {
+        throw new Error("Project description is required");
+      }
+      if (!projectForm.imageUrl.trim()) {
+        throw new Error("Project image is required (upload or enter URL)");
+      }
+
+      const tags = projectForm.tagsInput
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      const payload = {
+        title: projectForm.title.trim(),
+        category: projectForm.category.trim() || "Full-Stack",
+        description: projectForm.description.trim(),
+        tags,
+        imageUrl: projectForm.imageUrl.trim(),
+        cloudinaryPublicId: projectForm.cloudinaryPublicId,
+        liveUrl: projectForm.liveUrl.trim(),
+        githubUrl: projectForm.githubUrl.trim(),
+        featured: projectForm.featured,
+        order: Number(projectForm.order) || 0,
+      };
+
+      const endpoint = editingProjectId
+        ? `/api/projects/${editingProjectId}`
+        : "/api/projects";
+      const method = editingProjectId ? "PUT" : "POST";
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to save project");
+      }
+
+      await loadDashboardData();
+      window.dispatchEvent(new Event("portfolio-projects-updated"));
+
+      setProjectSavedMessage(
+        editingProjectId
+          ? "Project updated successfully!"
+          : "New project created successfully!"
+      );
+      setTimeout(() => setProjectSavedMessage(null), 4000);
+      setShowProjectModal(false);
+    } catch (err: unknown) {
+      setProjectError(err instanceof Error ? err.message : "Failed to save project");
+    } finally {
+      setSavingProject(false);
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    if (!window.confirm("Are you sure you want to delete this project?")) return;
+    setDeletingProjectId(projectId);
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete project");
+      }
+      await loadDashboardData();
+      window.dispatchEvent(new Event("portfolio-projects-updated"));
+      setProjectSavedMessage("Project deleted successfully.");
+      setTimeout(() => setProjectSavedMessage(null), 4000);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to delete project");
+    } finally {
+      setDeletingProjectId(null);
+    }
+  };
+
+  const handleToggleFeatured = async (project: ProjectItem) => {
+    if (!project._id) return;
+    try {
+      const res = await fetch(`/api/projects/${project._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ featured: !project.featured }),
+      });
+      if (res.ok) {
+        await loadDashboardData();
+        window.dispatchEvent(new Event("portfolio-projects-updated"));
+      }
+    } catch (err) {
+      console.error("Failed to toggle featured status:", err);
+    }
+  };
 
   // Check existing session on mount
   useEffect(() => {
@@ -2175,61 +2374,428 @@ export default function AdminPage() {
 
               {/* Tab: Projects */}
               {activeTab === "projects" && (
-                <div className="space-y-3">
+                <div className="space-y-6">
+                  {/* Status Alerts */}
+                  {projectSavedMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-3 shadow-xs"
+                    >
+                      <CheckCircle2 className="h-5 w-5 shrink-0" />
+                      <div>
+                        <p className="font-semibold">{projectSavedMessage}</p>
+                        <p className="text-xs opacity-90">Changes have been saved to MongoDB and synced live to your portfolio.</p>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Header & Add Project Bar */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] shadow-xs">
+                    <div>
+                      <h2 className="text-sm sm:text-base font-bold text-[var(--foreground)] flex items-center gap-2">
+                        <span>Portfolio Projects CMS</span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-normal">
+                          {projects.length} Total Projects
+                        </span>
+                      </h2>
+                      <p className="text-xs text-[var(--muted-fg)] mt-0.5">
+                        Manage your featured engineering projects, upload media screenshots to Cloudinary, and persist to MongoDB.
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={handleOpenCreateProject}
+                      className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-bold px-4 py-2 rounded-xl shadow-md hover:shadow-amber-500/25 transition-all text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Add New Project</span>
+                    </Button>
+                  </div>
+
+                  {/* Add / Edit Project Modal Dialog */}
+                  <AnimatePresence>
+                    {showProjectModal && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                          transition={{ duration: 0.2 }}
+                          className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--border)] rounded-3xl shadow-2xl overflow-hidden my-8"
+                        >
+                          {/* Modal Header */}
+                          <div className="flex items-center justify-between p-6 border-b border-[var(--border)] bg-[var(--muted)]/40">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                                <FolderGit2 className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)]">
+                                  {editingProjectId ? "Edit Project" : "Create New Project"}
+                                </h3>
+                                <p className="text-xs text-[var(--muted-fg)]">
+                                  {editingProjectId ? "Update project details and Cloudinary media." : "Add a project to showcase in your portfolio."}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => setShowProjectModal(false)}
+                              className="h-8 w-8 rounded-full bg-[var(--muted)] hover:bg-[var(--border)] text-[var(--muted-fg)] hover:text-[var(--foreground)] flex items-center justify-center transition-colors cursor-pointer"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          {/* Modal Form */}
+                          <form onSubmit={handleSaveProject} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                            {projectError && (
+                              <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+                                <AlertCircle className="h-4 w-4 shrink-0" />
+                                <span>{projectError}</span>
+                              </div>
+                            )}
+
+                            {/* Project Title & Category */}
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                              <div className="sm:col-span-8 space-y-1.5">
+                                <Label htmlFor="projTitle" className="text-xs font-semibold">
+                                  Project Title *
+                                </Label>
+                                <Input
+                                  id="projTitle"
+                                  value={projectForm.title}
+                                  onChange={(e) =>
+                                    setProjectForm((prev) => ({ ...prev, title: e.target.value }))
+                                  }
+                                  placeholder="Enterprise ERP & Platform"
+                                  className="text-xs sm:text-sm bg-[var(--background)]"
+                                  required
+                                />
+                              </div>
+
+                              <div className="sm:col-span-4 space-y-1.5">
+                                <Label htmlFor="projCategory" className="text-xs font-semibold">
+                                  Category
+                                </Label>
+                                <select
+                                  id="projCategory"
+                                  value={projectForm.category}
+                                  onChange={(e) =>
+                                    setProjectForm((prev) => ({ ...prev, category: e.target.value }))
+                                  }
+                                  className="w-full h-9 rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-1 text-xs text-[var(--foreground)] focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                                >
+                                  <option value="Full-Stack">Full-Stack</option>
+                                  <option value="Cloud & APIs">Cloud &amp; APIs</option>
+                                  <option value="Web Apps">Web Apps</option>
+                                  <option value="Backend">Backend</option>
+                                  <option value="Mobile Apps">Mobile Apps</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Description */}
+                            <div className="space-y-1.5">
+                              <Label htmlFor="projDesc" className="text-xs font-semibold">
+                                Description *
+                              </Label>
+                              <textarea
+                                id="projDesc"
+                                value={projectForm.description}
+                                onChange={(e) =>
+                                  setProjectForm((prev) => ({ ...prev, description: e.target.value }))
+                                }
+                                rows={3}
+                                placeholder="Describe the architecture, key problems solved, and real-world impact..."
+                                className="w-full rounded-md border border-[var(--border)] bg-[var(--background)] p-3 text-xs sm:text-sm text-[var(--foreground)] focus:outline-hidden focus:ring-2 focus:ring-amber-500 leading-relaxed"
+                                required
+                              />
+                            </div>
+
+                            {/* Tech Stack Tags Input */}
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <Label htmlFor="projTags" className="text-xs font-semibold flex items-center gap-1.5">
+                                  <Tag className="h-3.5 w-3.5 text-amber-500" />
+                                  <span>Tech Stack (Comma-Separated)</span>
+                                </Label>
+                                <span className="text-[10px] text-[var(--muted-fg)]">e.g. Java 21, Spring Boot, React, Next.js, Docker</span>
+                              </div>
+                              <Input
+                                id="projTags"
+                                value={projectForm.tagsInput}
+                                onChange={(e) =>
+                                  setProjectForm((prev) => ({ ...prev, tagsInput: e.target.value }))
+                                }
+                                placeholder="Java 21, Spring Boot, Next.js, PostgreSQL, Docker"
+                                className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                              />
+                            </div>
+
+                            {/* Cloudinary Project Image Upload */}
+                            <div className="space-y-2 p-4 rounded-2xl bg-[var(--muted)]/40 border border-[var(--border)]">
+                              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                                <ImageIcon className="h-3.5 w-3.5 text-amber-500" />
+                                <span>Project Media Screenshot (Cloudinary) *</span>
+                              </Label>
+
+                              {projectImageUploadError && (
+                                <p className="text-xs text-red-500">{projectImageUploadError}</p>
+                              )}
+
+                              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                                {/* Image Preview Thumbnail */}
+                                {projectForm.imageUrl ? (
+                                  <div className="relative h-24 w-36 rounded-xl overflow-hidden border border-[var(--border)] bg-zinc-900 shrink-0">
+                                    <img
+                                      src={projectForm.imageUrl}
+                                      alt="Project Preview"
+                                      className="h-full w-full object-cover"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setProjectForm((prev) => ({ ...prev, imageUrl: "", cloudinaryPublicId: "" }))
+                                      }
+                                      className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-red-600 transition-colors cursor-pointer"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="h-24 w-36 rounded-xl border-2 border-dashed border-[var(--border)] flex flex-col items-center justify-center text-[var(--muted-fg)] shrink-0 bg-[var(--background)]">
+                                    <ImageIcon className="h-6 w-6 opacity-40 mb-1" />
+                                    <span className="text-[10px]">No image yet</span>
+                                  </div>
+                                )}
+
+                                {/* Upload Controls */}
+                                <div className="space-y-2 flex-1 w-full">
+                                  <div className="flex items-center gap-2">
+                                    <label className="cursor-pointer inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-semibold transition-colors">
+                                      <UploadCloud className="h-3.5 w-3.5" />
+                                      <span>
+                                        {uploadingProjectImage ? "Uploading to Cloudinary..." : "Upload Screenshot"}
+                                      </span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={onProjectImageFileChange}
+                                        disabled={uploadingProjectImage}
+                                        className="hidden"
+                                      />
+                                    </label>
+                                    {uploadingProjectImage && (
+                                      <RefreshCw className="h-3.5 w-3.5 animate-spin text-amber-500" />
+                                    )}
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <span className="text-[10px] text-[var(--muted-fg)]">Or provide direct Image URL:</span>
+                                    <Input
+                                      value={projectForm.imageUrl}
+                                      onChange={(e) =>
+                                        setProjectForm((prev) => ({ ...prev, imageUrl: e.target.value }))
+                                      }
+                                      placeholder="https://images.unsplash.com/..."
+                                      className="text-xs bg-[var(--background)]"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* URLs: Live Demo & GitHub */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <Label htmlFor="projLiveUrl" className="text-xs font-semibold flex items-center gap-1.5">
+                                  <Globe className="h-3.5 w-3.5 text-amber-500" />
+                                  <span>Live Demo URL</span>
+                                </Label>
+                                <Input
+                                  id="projLiveUrl"
+                                  value={projectForm.liveUrl}
+                                  onChange={(e) =>
+                                    setProjectForm((prev) => ({ ...prev, liveUrl: e.target.value }))
+                                  }
+                                  placeholder="https://yourproject.com"
+                                  className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <Label htmlFor="projGithubUrl" className="text-xs font-semibold flex items-center gap-1.5">
+                                  <Code2 className="h-3.5 w-3.5 text-amber-500" />
+                                  <span>GitHub Repository URL</span>
+                                </Label>
+                                <Input
+                                  id="projGithubUrl"
+                                  value={projectForm.githubUrl}
+                                  onChange={(e) =>
+                                    setProjectForm((prev) => ({ ...prev, githubUrl: e.target.value }))
+                                  }
+                                  placeholder="https://github.com/user/repo"
+                                  className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Featured & Order */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-2xl bg-[var(--muted)]/40 border border-[var(--border)]">
+                              <label className="flex items-center gap-2.5 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={projectForm.featured}
+                                  onChange={(e) =>
+                                    setProjectForm((prev) => ({ ...prev, featured: e.target.checked }))
+                                  }
+                                  className="h-4 w-4 rounded-sm border-[var(--border)] text-amber-500 focus:ring-amber-500"
+                                />
+                                <div>
+                                  <span className="text-xs font-semibold text-[var(--foreground)] flex items-center gap-1">
+                                    <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                                    <span>Featured Project</span>
+                                  </span>
+                                  <p className="text-[10px] text-[var(--muted-fg)]">Highlight at top of portfolio</p>
+                                </div>
+                              </label>
+
+                              <div className="flex items-center justify-between gap-2">
+                                <Label htmlFor="projOrder" className="text-xs font-semibold">
+                                  Display Order:
+                                </Label>
+                                <Input
+                                  id="projOrder"
+                                  type="number"
+                                  value={projectForm.order}
+                                  onChange={(e) =>
+                                    setProjectForm((prev) => ({ ...prev, order: Number(e.target.value) }))
+                                  }
+                                  className="w-20 text-xs bg-[var(--background)] text-center font-mono"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Modal Actions */}
+                            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border)]">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowProjectModal(false)}
+                                className="text-xs"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                type="submit"
+                                disabled={savingProject || uploadingProjectImage}
+                                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-bold px-6 text-xs cursor-pointer"
+                              >
+                                {savingProject ? (
+                                  <>
+                                    <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                                    <span>Saving to MongoDB...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Check className="h-3.5 w-3.5 mr-1" />
+                                    <span>{editingProjectId ? "Update Project" : "Save Project"}</span>
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </form>
+                        </motion.div>
+                      </div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Projects List Grid */}
                   {projects.length === 0 ? (
-                    <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-[var(--border)] text-[var(--muted-fg)]">
-                      <FolderGit2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm font-medium">No projects added yet.</p>
-                      <p className="text-xs text-[var(--muted-fg)] mt-1">
-                        Projects stored in your MongoDB database will appear here.
+                    <div className="text-center py-16 px-4 rounded-3xl border border-dashed border-[var(--border)] text-[var(--muted-fg)] bg-[var(--card-bg)]/50">
+                      <FolderGit2 className="h-10 w-10 mx-auto mb-3 opacity-40 text-amber-500" />
+                      <p className="text-sm font-bold text-[var(--foreground)]">No projects added yet.</p>
+                      <p className="text-xs text-[var(--muted-fg)] mt-1 max-w-sm mx-auto">
+                        Click &quot;Add New Project&quot; above to add your first project with title, description, tech stack, and Cloudinary screenshot.
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                       {projects.map((proj, idx) => (
                         <div
                           key={proj._id || idx}
-                          className="rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] overflow-hidden shadow-xs hover:border-amber-500/40 transition-all flex flex-col justify-between"
+                          className="group rounded-3xl border border-[var(--border)] bg-[var(--card-bg)] overflow-hidden shadow-xs hover:border-amber-500/40 hover:shadow-md transition-all flex flex-col justify-between"
                         >
-                          {proj.imageUrl && (
-                            <div className="relative h-36 w-full overflow-hidden bg-zinc-900">
-                              <img
-                                src={proj.imageUrl}
-                                alt={proj.title}
-                                className="h-full w-full object-cover"
-                              />
+                          {/* Card Image Banner */}
+                          <div className="relative h-40 w-full overflow-hidden bg-zinc-900">
+                            <img
+                              src={proj.imageUrl || "/project-placeholder.jpg"}
+                              alt={proj.title}
+                              className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30" />
+
+                            <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between pointer-events-none">
+                              {proj.featured ? (
+                                <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-500 text-zinc-950 shadow-sm">
+                                  <Star className="h-2.5 w-2.5 fill-zinc-950" />
+                                  Featured
+                                </span>
+                              ) : (
+                                <div />
+                              )}
+
+                              {proj.category && (
+                                <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/60 text-white/90 border border-white/10 backdrop-blur-sm">
+                                  {proj.category}
+                                </span>
+                              )}
                             </div>
-                          )}
-                          <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
+                          </div>
+
+                          {/* Card Info */}
+                          <div className="p-4 sm:p-5 space-y-3 flex-1 flex flex-col justify-between">
                             <div>
-                              <h3 className="font-bold text-sm text-[var(--foreground)]">{proj.title}</h3>
-                              <p className="text-xs text-[var(--muted-fg)] line-clamp-2 mt-1">
+                              <h3 className="font-bold text-sm sm:text-base text-[var(--foreground)] line-clamp-1">
+                                {proj.title}
+                              </h3>
+                              <p className="text-xs text-[var(--muted-fg)] line-clamp-2 mt-1 leading-relaxed">
                                 {proj.description}
                               </p>
-                            </div>
 
-                            <div className="pt-2">
-                              <div className="flex flex-wrap gap-1 mb-3">
-                                {proj.tags?.slice(0, 3).map((tag, tIdx) => (
+                              {/* Tags */}
+                              <div className="flex flex-wrap gap-1 mt-3">
+                                {proj.tags?.slice(0, 4).map((tag, tIdx) => (
                                   <span
                                     key={tIdx}
-                                    className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[var(--muted)] text-[var(--muted-fg)]"
+                                    className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[var(--muted)] text-[var(--muted-fg)] border border-[var(--border)]"
                                   >
                                     {tag}
                                   </span>
                                 ))}
+                                {(proj.tags?.length || 0) > 4 && (
+                                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md text-[var(--muted-fg)]">
+                                    +{(proj.tags?.length || 0) - 4}
+                                  </span>
+                                )}
                               </div>
+                            </div>
 
-                              <div className="flex items-center gap-2 pt-1 border-t border-[var(--border)] text-xs">
+                            {/* Card Admin Actions */}
+                            <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1">
                                 {proj.liveUrl && (
                                   <a
                                     href={proj.liveUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 hover:underline"
+                                    title="Live Demo"
+                                    className="h-7 w-7 rounded-lg bg-[var(--muted)] hover:bg-amber-500 hover:text-zinc-950 flex items-center justify-center text-[var(--muted-fg)] transition-colors"
                                   >
-                                    <span>Demo</span>
-                                    <ExternalLink className="h-3 w-3" />
+                                    <ExternalLink className="h-3.5 w-3.5" />
                                   </a>
                                 )}
                                 {proj.githubUrl && (
@@ -2237,11 +2803,47 @@ export default function AdminPage() {
                                     href={proj.githubUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="inline-flex items-center gap-1 text-[var(--muted-fg)] hover:text-[var(--foreground)] ml-auto"
+                                    title="GitHub Source"
+                                    className="h-7 w-7 rounded-lg bg-[var(--muted)] hover:bg-[var(--border)] flex items-center justify-center text-[var(--muted-fg)] transition-colors"
                                   >
-                                    <span>Code</span>
-                                    <ExternalLink className="h-3 w-3" />
+                                    <Code2 className="h-3.5 w-3.5" />
                                   </a>
+                                )}
+                                {proj._id && (
+                                  <button
+                                    onClick={() => handleToggleFeatured(proj)}
+                                    title={proj.featured ? "Unfeature" : "Mark as Featured"}
+                                    className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                                      proj.featured
+                                        ? "text-amber-500 bg-amber-500/15"
+                                        : "text-[var(--muted-fg)] hover:text-amber-500 bg-[var(--muted)]"
+                                    }`}
+                                  >
+                                    <Star className={`h-3.5 w-3.5 ${proj.featured ? "fill-amber-500" : ""}`} />
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1.5">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleOpenEditProject(proj)}
+                                  className="h-7 px-2.5 text-xs gap-1 cursor-pointer"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                  <span>Edit</span>
+                                </Button>
+                                {proj._id && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDeleteProject(proj._id!)}
+                                    disabled={deletingProjectId === proj._id}
+                                    className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-500/10 border-red-500/30 cursor-pointer"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
                                 )}
                               </div>
                             </div>

@@ -57,31 +57,105 @@ export default function About() {
         {/* LEFT COLUMN: ID Card Matching Reference Exactly */}
         <div className="lg:col-span-5 flex flex-col items-center justify-center">
           <div className="id-card-hanging">
-          {/* Lanyard Top Fixture (Matching Mustard Strap & Metal Swivel Clip) */}
-          <div className="relative flex flex-col items-center pointer-events-none z-20 -mb-2.5 sm:-mb-3">
+          {/* Lanyard Top Fixture (Mustard Strap, Metal Swivel & Lobster Clasp Hooking Through the Hole) */}
+          <div className="relative flex flex-col items-center pointer-events-none z-30 -mb-6 sm:-mb-7">
             {/* Mustard Fabric Lanyard Ribbon */}
-            <div className="w-12 sm:w-14 h-10 sm:h-13 bg-gradient-to-r from-[var(--lanyard-from)] via-[var(--lanyard-via)] to-[var(--lanyard-to)] shadow-sm relative overflow-hidden flex justify-center">
-              {/* Vertical weave stitch lines */}
-              <div className="absolute inset-0 opacity-25 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,0.15)_2px,rgba(0,0,0,0.15)_4px)]" />
-              <div className="absolute inset-y-0 w-[1px] bg-black/15 left-1" />
-              <div className="absolute inset-y-0 w-[1px] bg-black/15 right-1" />
+            <div className="w-12 sm:w-14 h-12 sm:h-14 bg-gradient-to-r from-[var(--lanyard-from)] via-[var(--lanyard-via)] to-[var(--lanyard-to)] shadow-md relative overflow-hidden flex justify-center rounded-t-xs">
+              {/* Vertical weave stitch lines & texture */}
+              <div className="absolute inset-0 opacity-25 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,rgba(0,0,0,0.2)_2px,rgba(0,0,0,0.2)_4px)]" />
+              <div className="absolute inset-y-0 w-[1.5px] bg-black/20 left-1.5" />
+              <div className="absolute inset-y-0 w-[1.5px] bg-black/20 right-1.5" />
+              <div className="absolute inset-y-0 w-[1px] bg-white/20 left-2.5" />
+              <div className="absolute inset-y-0 w-[1px] bg-white/20 right-2.5" />
             </div>
 
-            {/* Metal Strap Clamp / Buckle */}
-            <div className="w-14 sm:w-16 h-2.5 sm:h-3 bg-gradient-to-r from-neutral-300 via-neutral-100 to-neutral-400 dark:from-neutral-500 dark:via-neutral-400 dark:to-neutral-600 rounded-xs border border-neutral-400/80 dark:border-neutral-500/80 shadow-xs z-10 -mt-0.5" />
+            {/* Metal Strap Clamp / Buckle with Grip Ribs */}
+            <div className="w-14 sm:w-16 h-3 sm:h-3.5 bg-gradient-to-r from-neutral-400 via-neutral-100 to-neutral-400 dark:from-neutral-600 dark:via-neutral-300 dark:to-neutral-600 rounded-[2px] border border-neutral-400/90 dark:border-neutral-500/90 shadow-sm z-20 -mt-0.5 flex flex-col justify-center items-center gap-[2px]">
+              <div className="w-11 sm:w-13 h-[1px] bg-neutral-500/60 dark:bg-neutral-700/60 shadow-[0_1px_0_rgba(255,255,255,0.6)]" />
+              <div className="w-11 sm:w-13 h-[1px] bg-neutral-500/60 dark:bg-neutral-700/60 shadow-[0_1px_0_rgba(255,255,255,0.6)]" />
+            </div>
 
-            {/* Metal Swivel Loop & Hook */}
-            <div className="flex flex-col items-center -mt-0.5 z-10">
-              {/* Loop */}
-              <div className="w-4.5 sm:w-5 h-3.5 sm:h-4 border-2 border-neutral-400/90 dark:border-neutral-500/90 rounded-t-md bg-transparent" />
-              {/* Swivel Pivot */}
-              <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-neutral-300 dark:bg-neutral-500 border border-neutral-500 dark:border-neutral-600 -mt-1 shadow-2xs" />
-              {/* Metal Clasp / Hook passing through the slot */}
-              <div className="w-3.5 sm:w-4 h-3.5 sm:h-4 border-2 border-neutral-500 dark:border-neutral-400 rounded-b-md bg-transparent -mt-0.5" />
+            {/* Metal Swivel Loop & Lobster Clasp Assembly */}
+            <div className="relative flex flex-col items-center -mt-0.5 z-20">
+              {/* Swivel D-Ring */}
+              <div className="w-5 sm:w-5.5 h-3.5 sm:h-4 border-[2.5px] border-neutral-400 dark:border-neutral-400 rounded-t-md bg-transparent shadow-2xs" />
+              {/* Swivel Pivot Barrel */}
+              <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-[2px] bg-gradient-to-r from-neutral-400 via-neutral-200 to-neutral-400 dark:from-neutral-600 dark:via-neutral-300 dark:to-neutral-600 border border-neutral-500 dark:border-neutral-600 -mt-1 shadow-xs flex items-center justify-center">
+                <div className="w-1.5 h-[1px] bg-neutral-600 dark:bg-neutral-400" />
+              </div>
+
+              {/* Realistic Metal Lobster Clasp / Hook - Hooks physically into the Hole */}
+              <svg
+                className="w-8 sm:w-9 h-11 sm:h-12 -mt-1 filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.35)]"
+                viewBox="0 0 36 48"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  <linearGradient id="chromeGradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#e2e8f0" />
+                    <stop offset="35%" stopColor="#ffffff" />
+                    <stop offset="65%" stopColor="#94a3b8" />
+                    <stop offset="100%" stopColor="#64748b" />
+                  </linearGradient>
+                  <linearGradient id="chromeDark" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#94a3b8" />
+                    <stop offset="50%" stopColor="#475569" />
+                    <stop offset="100%" stopColor="#1e293b" />
+                  </linearGradient>
+                </defs>
+
+                {/* Swivel Collar */}
+                <rect x="14" y="2" width="8" height="3.5" rx="1" fill="url(#chromeGradient)" stroke="#64748b" strokeWidth="0.75" />
+
+                {/* Clasp Body */}
+                <path
+                  d="M13 5.5 C13 5.5, 11 11, 11 17 C11 23, 14 27, 18 27 C22 27, 25 23, 25 17 C25 11, 23 5.5, 23 5.5 Z"
+                  fill="url(#chromeGradient)"
+                  stroke="#475569"
+                  strokeWidth="1"
+                />
+
+                {/* Clasp Spring Trigger Lever */}
+                <path
+                  d="M23 11.5 L28 13.5 C28.5 13.7, 28.5 15.3, 28 15.5 L23 17"
+                  fill="url(#chromeGradient)"
+                  stroke="#475569"
+                  strokeWidth="0.75"
+                />
+                <circle cx="27" cy="14.5" r="0.9" fill="#475569" />
+
+                {/* Clasp Center Split Line */}
+                <path
+                  d="M18 9 L18 23"
+                  stroke="#475569"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                />
+
+                {/* Metal Hook Arm - Descends and Loops into & through the Hole */}
+                <path
+                  d="M14 25 C14 31, 14 37, 16 41 C17.5 44, 20 45, 22 44 C24 42.5, 24.5 39, 23 34 C22 31, 20 29, 18 27"
+                  fill="none"
+                  stroke="url(#chromeGradient)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* Metallic Highlight on Hook */}
+                <path
+                  d="M14.5 27 C14.5 32, 14.8 37, 16.5 40 C17.5 42, 19.5 43, 21 42.5"
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                  opacity="0.85"
+                />
+              </svg>
             </div>
           </div>
 
-          {/* Realistic Physical ID Card */}
+          {/* Realistic Physical ID Card with Curved Top Hanger Section */}
           <motion.div
             ref={cardRef}
             onMouseMove={handleMouseMove}
@@ -91,11 +165,20 @@ export default function About() {
               rotateY,
               transformStyle: "preserve-3d",
             }}
-            className="group relative w-full max-w-[270px] sm:max-w-[295px] lg:max-w-[305px] bg-[var(--card-bg)] rounded-3xl shadow-[0_15px_40px_-10px_var(--card-shadow)] border border-[var(--card-border)] overflow-hidden select-none transition-shadow duration-300 hover:shadow-[0_20px_50px_-10px_var(--card-shadow-hover)]"
+            className="group relative w-full max-w-[270px] sm:max-w-[295px] lg:max-w-[305px] bg-[var(--card-bg)] rounded-t-[44px] sm:rounded-t-[52px] rounded-b-3xl shadow-[0_15px_40px_-10px_var(--card-shadow)] border border-[var(--card-border)] overflow-hidden select-none transition-shadow duration-300 hover:shadow-[0_20px_50px_-10px_var(--card-shadow-hover)]"
           >
-            {/* Lanyard Oval Slot Punch Hole at Top Center */}
-            <div className="mx-auto mt-3.5 sm:mt-4 w-11 sm:w-12 h-2 sm:h-2.5 rounded-full bg-neutral-300/80 dark:bg-neutral-600/80 border border-neutral-400/80 dark:border-neutral-500/80 shadow-inner flex items-center justify-center">
-              <div className="w-8 sm:w-9 h-1 rounded-full bg-neutral-400/70 dark:bg-neutral-500/70" />
+            {/* Top Glossy Bevel Highlight along Curved Top Arch */}
+            <div className="absolute top-0 inset-x-0 h-10 bg-gradient-to-b from-white/30 dark:from-white/10 via-white/5 to-transparent pointer-events-none" />
+
+            {/* Curved Top Section Badge Header with Cutout Slot Punch Hole */}
+            <div className="relative pt-3.5 sm:pt-4 pb-0.5 flex flex-col items-center justify-center">
+              {/* Lanyard Oval Slot Punch Hole - Realistic Cutout with 3D Beveled Rim */}
+              <div className="relative w-12 sm:w-14 h-3 sm:h-3.5 rounded-full bg-neutral-200/50 dark:bg-neutral-900/60 border-[1.5px] border-neutral-400/80 dark:border-neutral-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.35),0_1px_1px_rgba(255,255,255,0.8)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.7),0_1px_1px_rgba(255,255,255,0.1)] flex items-center justify-center overflow-hidden">
+                {/* Background cutout depth */}
+                <div className="absolute inset-0 bg-black/15 dark:bg-black/50" />
+                {/* Metal hook loop visible through the hole */}
+                <div className="w-5 sm:w-6 h-1.5 rounded-full bg-gradient-to-r from-neutral-400 via-neutral-200 to-neutral-400 dark:from-neutral-500 dark:via-neutral-300 dark:to-neutral-500 opacity-90 shadow-inner" />
+              </div>
             </div>
 
             {/* Card Content Header: Company Logo & Name */}

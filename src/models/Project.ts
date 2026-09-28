@@ -4,6 +4,7 @@ export interface IProject {
   _id?: string;
   title: string;
   slug?: string;
+  category?: string;
   description: string;
   tags: string[];
   imageUrl: string;
@@ -20,6 +21,7 @@ const ProjectSchema = new Schema<IProject>(
   {
     title: { type: String, required: true, trim: true },
     slug: { type: String, trim: true },
+    category: { type: String, trim: true, default: "Full-Stack" },
     description: { type: String, required: true },
     tags: { type: [String], default: [] },
     imageUrl: { type: String, required: true },
