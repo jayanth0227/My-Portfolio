@@ -260,13 +260,15 @@ export default function TechOrbit() {
   return (
     <section
       id="skills"
-      className="relative w-full bg-[var(--background)] pt-10 pb-16 sm:pt-12 sm:pb-20 lg:pt-12 lg:pb-20 overflow-hidden border-t border-[var(--border)]/40 scroll-mt-0"
+      className="relative w-full bg-[var(--background)] pt-6 pb-8 sm:pt-8 sm:pb-10 lg:pt-8 lg:pb-12 overflow-hidden border-t border-[var(--border)]/40 scroll-mt-0"
     >
-      {/* Interactive Dash Grid Layer with All Animations */}
+      {/* Interactive Reactive Dash Grid Layer with Cursor Physics */}
       <GridPattern
+        interactive={true}
         width={40}
         height={40}
         strokeDasharray="4 2"
+        maxDisplacement={5}
       />
 
       {/* Background Ambient Radial Glow */}

@@ -1,0 +1,133 @@
+/* From Uiverse.io by EmmaxPlay - Integrated with Portfolio Theme */
+
+.project-uiverse-card {
+  width: 100%;
+  position: relative;
+  background-color: #f3f4f6;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 18px;
+  overflow: hidden;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.35s ease,
+              background-color 0.35s ease;
+}
+
+:where(.dark, .dark *) .project-uiverse-card {
+  background-color: #16161a;
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+}
+
+.project-uiverse-card:hover {
+  transform: translateY(-5px);
+  border-color: #f59e0b;
+  box-shadow: 0 20px 45px -10px rgba(234, 179, 8, 0.2),
+              0 0 16px -2px rgba(250, 204, 21, 0.12);
+}
+
+:where(.dark, .dark *) .project-uiverse-card:hover {
+  border-color: #fbbf24;
+  box-shadow: 0 26px 55px -12px rgba(0, 0, 0, 0.8),
+              0 0 22px -2px rgba(251, 191, 36, 0.22);
+}
+
+/* Tools Bar - macOS Terminal Window Controls */
+.tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  background-color: #e5e7eb;
+  border-bottom: 1px solid #d1d5db;
+}
+
+:where(.dark, .dark *) .tools {
+  background-color: #1f1f24;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.tools-left {
+  display: flex;
+  align-items: center;
+}
+
+.circle {
+  padding: 0 3px;
+}
+
+.box {
+  display: inline-block;
+  align-items: center;
+  width: 9.5px;
+  height: 9.5px;
+  border-radius: 50%;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.project-uiverse-card:hover .box {
+  transform: scale(1.1);
+}
+
+.red {
+  background-color: #ff605c;
+  box-shadow: 0 0 5px rgba(255, 96, 92, 0.4);
+}
+
+.yellow {
+  background-color: #ffbd44;
+  box-shadow: 0 0 5px rgba(255, 189, 68, 0.4);
+}
+
+.green {
+  background-color: #00ca4e;
+  box-shadow: 0 0 5px rgba(0, 202, 78, 0.4);
+}
+
+.tools-title {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted-fg, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  user-select: none;
+}
+
+:where(.dark, .dark *) .tools-title {
+  color: var(--muted-fg, #a1a1aa);
+}
+
+/* Inset / Offset Image Container */
+.project-image-inset-wrap {
+  padding: 10px 10px 0 10px;
+  width: 100%;
+}
+
+.project-image-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9.5;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #090e17;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+:where(.dark, .dark *) .project-image-box {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.card__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 0;
+}

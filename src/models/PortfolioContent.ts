@@ -1,5 +1,16 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+export interface IExperienceItem {
+  id: string;
+  period: string;
+  title: string;
+  role: string;
+  location?: string;
+  description: string;
+  technologies?: string[];
+  order?: number;
+}
+
 export interface IPortfolioContent extends Document {
   key: string;
   navbar: {
@@ -47,6 +58,7 @@ export interface IPortfolioContent extends Document {
     terminalCtaText?: string;
     terminalCtaUrl?: string;
   };
+  experience: IExperienceItem[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -252,6 +264,18 @@ const PortfolioContentSchema: Schema = new Schema(
         trim: true,
       },
     },
+    experience: [
+      {
+        id: { type: String, required: true },
+        period: { type: String, required: true, trim: true },
+        title: { type: String, required: true, trim: true },
+        role: { type: String, required: true, trim: true },
+        location: { type: String, default: "", trim: true },
+        description: { type: String, required: true, trim: true },
+        technologies: [{ type: String, trim: true }],
+        order: { type: Number, default: 0 },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -259,6 +283,10 @@ const PortfolioContentSchema: Schema = new Schema(
 );
 
 export { DEFAULT_PORTFOLIO_CONTENT } from "@/lib/contentDefaults";
+
+if (mongoose.models && mongoose.models.PortfolioContent) {
+  delete (mongoose.models as Record<string, unknown>).PortfolioContent;
+}
 
 const PortfolioContent: Model<IPortfolioContent> =
   mongoose.models.PortfolioContent ||

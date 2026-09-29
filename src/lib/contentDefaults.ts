@@ -1,3 +1,14 @@
+export interface ExperienceItem {
+  id: string;
+  period: string;
+  title: string;
+  role: string;
+  location?: string;
+  description: string;
+  technologies?: string[];
+  order?: number;
+}
+
 export interface PortfolioContentData {
   navbar: {
     brandName: string;
@@ -44,6 +55,7 @@ export interface PortfolioContentData {
     terminalCtaText?: string;
     terminalCtaUrl?: string;
   };
+  experience: ExperienceItem[];
 }
 
 export const DEFAULT_PORTFOLIO_CONTENT: PortfolioContentData = {
@@ -93,5 +105,65 @@ export const DEFAULT_PORTFOLIO_CONTENT: PortfolioContentData = {
     terminalCtaText: "Get In Touch",
     terminalCtaUrl: "#contact",
   },
+  experience: [
+    {
+      id: "exp-1",
+      period: "Jan 2024 – Present",
+      title: "Speshway Solutions",
+      role: "Associate Software Engineer",
+      location: "Hyderabad, India",
+      description:
+        "Architecting and developing enterprise-grade web applications and high-performance microservices using Java, Spring Boot, Next.js, and TypeScript. Engineering secure REST APIs, designing efficient PostgreSQL database schemas, and building responsive, interactive user dashboards with smooth performance across devices.",
+      technologies: [
+        "Java",
+        "Spring Boot",
+        "Next.js",
+        "TypeScript",
+        "PostgreSQL",
+        "REST APIs",
+        "Tailwind CSS",
+        "Docker",
+      ],
+      order: 1,
+    },
+    {
+      id: "exp-2",
+      period: "Jul 2023 – Dec 2023",
+      title: "Speshway Technologies",
+      role: "Full Stack Java Developer Intern",
+      location: "Hyderabad, India",
+      description:
+        "Developed core backend modules using Spring Boot and Hibernate ORM. Implemented JWT-based authentication mechanisms and role-based access control (RBAC). Collaborated with the frontend team to integrate dynamic REST API services into React user interfaces.",
+      technologies: [
+        "Java",
+        "Spring Boot",
+        "React.js",
+        "MySQL",
+        "Hibernate",
+        "JWT",
+        "Git",
+      ],
+      order: 2,
+    },
+    {
+      id: "exp-3",
+      period: "2022 – 2023",
+      title: "Independent & Academic Projects",
+      role: "Full-Stack Software Developer",
+      location: "India",
+      description:
+        "Designed and implemented multiple end-to-end full-stack applications including e-commerce platforms, portfolio management engines, and real-time interactive tools. Focused on responsive UI/UX design, clean modular code architectures, and cloud deployments on Vercel and AWS.",
+      technologies: [
+        "React.js",
+        "Node.js",
+        "Express.js",
+        "MongoDB",
+        "JavaScript",
+        "REST APIs",
+        "Tailwind CSS",
+      ],
+      order: 3,
+    },
+  ],
 };
 

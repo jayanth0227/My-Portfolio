@@ -8,7 +8,10 @@ export async function GET() {
   try {
     await connectToDatabase();
 
-    const content = await PortfolioContent.findOne({ key: "home" }).lean();
+    let content = await PortfolioContent.findOne({ key: "home" }).lean();
+    if (!content) {
+      content = await PortfolioContent.findOne({}).lean();
+    }
 
     if (!content) {
       return NextResponse.json({
@@ -67,6 +70,10 @@ export async function GET() {
             terminalCtaText: content.about?.terminalCtaText || DEFAULT_PORTFOLIO_CONTENT.about.terminalCtaText,
             terminalCtaUrl: content.about?.terminalCtaUrl || DEFAULT_PORTFOLIO_CONTENT.about.terminalCtaUrl,
           },
+          experience:
+            Array.isArray(content.experience)
+              ? content.experience
+              : DEFAULT_PORTFOLIO_CONTENT.experience,
         },
         source: "database",
       },

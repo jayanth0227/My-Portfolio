@@ -120,10 +120,10 @@ export default function InteractiveStripedBackground({
     let stripes: StripeLine[] = [];
     let particles: Particle[] = [];
 
-    // Initialize diagonal stripes
+    // Initialize diagonal stripes with optimized step for peak performance
     const initStripes = () => {
       stripes = [];
-      const step = 20; // Distance between nodes along a line
+      const step = 36; // Optimized distance between nodes along a line (prevents CPU lag)
       const minK = -canvasH;
       const maxK = canvasW + canvasH;
 
@@ -149,18 +149,19 @@ export default function InteractiveStripedBackground({
         }
       }
 
-      // Initialize floating motion particles
+      // Initialize subtle floating particles (lightweight)
+      const count = Math.min(particleCount, 16);
       particles = [];
-      for (let i = 0; i < particleCount; i++) {
+      for (let i = 0; i < count; i++) {
         particles.push({
           x: Math.random() * (canvasW || 800),
           y: Math.random() * (canvasH || 600),
-          vx: (Math.random() - 0.5) * 0.35 + 0.2,
-          vy: (Math.random() - 0.5) * 0.35 + 0.2,
-          size: Math.random() * 2 + 1.2,
-          alpha: Math.random() * 0.7 + 0.3,
+          vx: (Math.random() - 0.5) * 0.25 + 0.1,
+          vy: (Math.random() - 0.5) * 0.25 + 0.1,
+          size: Math.random() * 1.8 + 1,
+          alpha: Math.random() * 0.5 + 0.2,
           phase: Math.random() * Math.PI * 2,
-          speed: Math.random() * 0.03 + 0.015,
+          speed: Math.random() * 0.02 + 0.01,
         });
       }
     };
@@ -391,15 +392,12 @@ export default function InteractiveStripedBackground({
         ctx.restore();
       }
 
-      // Keep animation alive if particles or spring physics are active
-      if (maxActivity > 0.005 || particles.length > 0) {
-        if (isVisible && !prefersReducedMotion) {
-          animationFrameId = requestAnimationFrame(render);
-        } else {
-          isAnimating = false;
-        }
+      // Settle and sleep gracefully when not interacting (stops hanging & lag)
+      if (!prefersReducedMotion && isVisible && (maxActivity > 0.005 || mouse.isInside)) {
+        animationFrameId = requestAnimationFrame(render);
       } else {
         isAnimating = false;
+        animationFrameId = 0;
       }
     }
 

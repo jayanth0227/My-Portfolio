@@ -33,6 +33,9 @@ export function PortfolioContentProvider({ children }: { children: React.ReactNo
             navbar: { ...prev.navbar, ...data.content.navbar },
             hero: { ...prev.hero, ...data.content.hero },
             about: { ...prev.about, ...data.content.about },
+            experience: Array.isArray(data.content.experience)
+              ? data.content.experience
+              : prev.experience,
           }));
         }
       }

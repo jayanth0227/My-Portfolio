@@ -41,6 +41,13 @@ import {
   Code2,
   Tag,
   Layers,
+  Briefcase,
+  Calendar,
+  MapPin,
+  ChevronUp,
+  ChevronDown,
+  ArrowUpDown,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,6 +63,7 @@ import { Label } from "@/components/ui/label";
 import { BorderBeam } from "@/registry/magicui/border-beam";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { QRCodeSVG } from "qrcode.react";
+import { ExperienceItem, DEFAULT_PORTFOLIO_CONTENT } from "@/lib/contentDefaults";
 
 interface MessageItem {
   _id: string;
@@ -91,10 +99,28 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Dashboard Data State
-  const [activeTab, setActiveTab] = useState<"content" | "about" | "messages" | "projects">("content");
+  const [activeTab, setActiveTab] = useState<"content" | "about" | "experience" | "messages" | "projects">("content");
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [fetchingData, setFetchingData] = useState(false);
+
+  // Experience Timeline CMS State
+  const [experienceList, setExperienceList] = useState<ExperienceItem[]>(DEFAULT_PORTFOLIO_CONTENT.experience);
+  const [showExperienceModal, setShowExperienceModal] = useState(false);
+  const [editingExpId, setEditingExpId] = useState<string | null>(null);
+  const [experienceForm, setExperienceForm] = useState({
+    period: "",
+    title: "",
+    role: "",
+    location: "Hyderabad, India",
+    description: "",
+    technologiesInput: "",
+    order: 1,
+  });
+  const [savingExperience, setSavingExperience] = useState(false);
+  const [experienceSavedMessage, setExperienceSavedMessage] = useState<string | null>(null);
+  const [experienceError, setExperienceError] = useState<string | null>(null);
+  const [deletingExpId, setDeletingExpId] = useState<string | null>(null);
 
   // Content CMS State
   const [contentForm, setContentForm] = useState({
@@ -343,6 +369,186 @@ export default function AdminPage() {
     }
   };
 
+  // Experience CMS Handlers
+  const handleOpenCreateExperience = () => {
+    setEditingExpId(null);
+    setExperienceForm({
+      period: "",
+      title: "",
+      role: "",
+      location: "Hyderabad, India",
+      description: "",
+      technologiesInput: "",
+      order: experienceList.length + 1,
+    });
+    setExperienceError(null);
+    setShowExperienceModal(true);
+  };
+
+  const handleOpenEditExperience = (exp: ExperienceItem) => {
+    const expId = exp.id || (exp as unknown as { _id?: string })._id || "";
+    setEditingExpId(expId);
+    setExperienceForm({
+      period: exp.period || "",
+      title: exp.title || "",
+      role: exp.role || "",
+      location: exp.location || "",
+      description: exp.description || "",
+      technologiesInput: exp.technologies ? exp.technologies.join(", ") : "",
+      order: exp.order ?? 1,
+    });
+    setExperienceError(null);
+    setShowExperienceModal(true);
+  };
+
+  const handleSaveExperience = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingExperience(true);
+    setExperienceError(null);
+
+    try {
+      if (!experienceForm.role.trim()) {
+        throw new Error("Job role is required");
+      }
+      if (!experienceForm.title.trim()) {
+        throw new Error("Company / Organization title is required");
+      }
+      if (!experienceForm.period.trim()) {
+        throw new Error("Date / Period is required");
+      }
+      if (!experienceForm.description.trim()) {
+        throw new Error("Experience description is required");
+      }
+
+      const technologies = experienceForm.technologiesInput
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      let updatedList: ExperienceItem[];
+
+      if (editingExpId) {
+        updatedList = experienceList.map((item) => {
+          const itemId = item.id || (item as unknown as { _id?: string })._id || "";
+          if (itemId === editingExpId) {
+            return {
+              ...item,
+              id: itemId,
+              period: experienceForm.period.trim(),
+              title: experienceForm.title.trim(),
+              role: experienceForm.role.trim(),
+              location: experienceForm.location.trim(),
+              description: experienceForm.description.trim(),
+              technologies,
+              order: Number(experienceForm.order) || 1,
+            };
+          }
+          return item;
+        });
+      } else {
+        const newItem: ExperienceItem = {
+          id: `exp-${Date.now()}`,
+          period: experienceForm.period.trim(),
+          title: experienceForm.title.trim(),
+          role: experienceForm.role.trim(),
+          location: experienceForm.location.trim(),
+          description: experienceForm.description.trim(),
+          technologies,
+          order: Number(experienceForm.order) || experienceList.length + 1,
+        };
+        updatedList = [...experienceList, newItem];
+      }
+
+      // Sort by order
+      updatedList.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+      const res = await fetch("/api/admin/content", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ experience: updatedList }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to save experience timeline");
+      }
+
+      setExperienceList(updatedList);
+      window.dispatchEvent(new Event("portfolio-content-updated"));
+
+      setExperienceSavedMessage(
+        editingExpId
+          ? "Experience item updated successfully!"
+          : "New experience added successfully!"
+      );
+      setTimeout(() => setExperienceSavedMessage(null), 4000);
+      setShowExperienceModal(false);
+    } catch (err: unknown) {
+      setExperienceError(err instanceof Error ? err.message : "Failed to save experience");
+    } finally {
+      setSavingExperience(false);
+    }
+  };
+
+  const handleDeleteExperience = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this experience entry?")) return;
+    setDeletingExpId(id);
+    try {
+      const updatedList = experienceList.filter(
+        (item) => (item.id || (item as unknown as { _id?: string })._id) !== id
+      );
+      const res = await fetch("/api/admin/content", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ experience: updatedList }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to delete experience");
+      }
+
+      setExperienceList(updatedList);
+      window.dispatchEvent(new Event("portfolio-content-updated"));
+      setExperienceSavedMessage("Experience entry deleted successfully.");
+      setTimeout(() => setExperienceSavedMessage(null), 4000);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to delete experience");
+    } finally {
+      setDeletingExpId(null);
+    }
+  };
+
+  const handleMoveExperience = async (index: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= experienceList.length) return;
+
+    const reordered = [...experienceList];
+    const temp = reordered[index];
+    reordered[index] = reordered[targetIndex];
+    reordered[targetIndex] = temp;
+
+    const updatedList = reordered.map((item, idx) => ({
+      ...item,
+      order: idx + 1,
+    }));
+
+    setExperienceList(updatedList);
+
+    try {
+      const res = await fetch("/api/admin/content", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ experience: updatedList }),
+      });
+      if (res.ok) {
+        window.dispatchEvent(new Event("portfolio-content-updated"));
+      }
+    } catch (err) {
+      console.error("Failed to reorder experience items:", err);
+    }
+  };
+
   // Check existing session on mount
   useEffect(() => {
     async function checkAuth() {
@@ -387,6 +593,12 @@ export default function AdminPage() {
       if (contentRes.ok) {
         const contentData = await contentRes.json();
         if (contentData.content) {
+          if (contentData.content.experience && Array.isArray(contentData.content.experience)) {
+            setExperienceList(contentData.content.experience);
+          } else {
+            setExperienceList(DEFAULT_PORTFOLIO_CONTENT.experience);
+          }
+
           setContentForm({
             navbarBrandName: contentData.content.navbar?.brandName || "Jayanth Sai Chikkala",
             heroBadgeText: contentData.content.hero?.badgeText || "Available for New Projects",
@@ -795,7 +1007,7 @@ export default function AdminPage() {
       </div>
 
       {/* Top Navbar */}
-      <header className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-md">
+      <header className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur-md">
         <Link
           href="/"
           className="group inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-[var(--muted-fg)] hover:text-[var(--foreground)] transition-colors"
@@ -814,7 +1026,7 @@ export default function AdminPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <main className="relative flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <AnimatePresence mode="wait">
           {isAuthenticated === null ? (
             // Loading session state
@@ -1017,41 +1229,53 @@ export default function AdminPage() {
               </div>
 
               {/* Stat Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs flex items-center justify-between">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-wider text-[var(--muted-fg)] font-medium">Inquiries</p>
-                    <p className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] mt-1">
+                    <p className="text-[11px] sm:text-xs uppercase tracking-wider text-[var(--muted-fg)] font-medium">Inquiries</p>
+                    <p className="text-xl sm:text-3xl font-extrabold text-[var(--foreground)] mt-1">
                       {messages.length}
                     </p>
                   </div>
-                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                    <MessageSquare className="h-5 w-5" />
+                  <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
                 </div>
 
-                <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs flex items-center justify-between">
+                <div className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-wider text-[var(--muted-fg)] font-medium">Projects</p>
-                    <p className="text-2xl sm:text-3xl font-extrabold text-[var(--foreground)] mt-1">
+                    <p className="text-[11px] sm:text-xs uppercase tracking-wider text-[var(--muted-fg)] font-medium">Projects</p>
+                    <p className="text-xl sm:text-3xl font-extrabold text-[var(--foreground)] mt-1">
                       {projects.length}
                     </p>
                   </div>
-                  <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                    <FolderGit2 className="h-5 w-5" />
+                  <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                    <FolderGit2 className="h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
                 </div>
 
-                <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs flex items-center justify-between">
+                <div className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-wider text-[var(--muted-fg)] font-medium">Gateway</p>
-                    <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                      Live &amp; Secure
+                    <p className="text-[11px] sm:text-xs uppercase tracking-wider text-[var(--muted-fg)] font-medium">Experience</p>
+                    <p className="text-xl sm:text-3xl font-extrabold text-[var(--foreground)] mt-1">
+                      {experienceList.length}
                     </p>
                   </div>
-                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <ShieldCheck className="h-5 w-5" />
+                  <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <Briefcase className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </div>
+                </div>
+
+                <div className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] sm:text-xs uppercase tracking-wider text-[var(--muted-fg)] font-medium">Gateway</p>
+                    <p className="text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1 sm:mt-1.5 flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      Live
+                    </p>
+                  </div>
+                  <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
                 </div>
               </div>
@@ -1079,6 +1303,17 @@ export default function AdminPage() {
                 >
                   <UserCheck className="h-3.5 w-3.5" />
                   <span>About &amp; ID Card CMS</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("experience")}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeTab === "experience"
+                      ? "bg-amber-500 text-zinc-950 shadow-xs"
+                      : "text-[var(--muted-fg)] hover:text-[var(--foreground)] hover:bg-[var(--muted)]"
+                  }`}
+                >
+                  <Briefcase className="h-3.5 w-3.5" />
+                  <span>Experience Timeline ({experienceList.length})</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("messages")}
@@ -2330,6 +2565,182 @@ export default function AdminPage() {
                 </div>
               )}
 
+              {/* Tab: Experience Timeline CMS */}
+              {activeTab === "experience" && (
+                <div className="space-y-6">
+                  {/* Status Alerts */}
+                  {experienceSavedMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-3 shadow-xs"
+                    >
+                      <CheckCircle2 className="h-5 w-5 shrink-0" />
+                      <div>
+                        <p className="font-semibold">{experienceSavedMessage}</p>
+                        <p className="text-xs opacity-90">Changes have been saved to MongoDB and are live on your portfolio timeline.</p>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {experienceError && (
+                    <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-3">
+                      <AlertCircle className="h-5 w-5 shrink-0" />
+                      <p>{experienceError}</p>
+                    </div>
+                  )}
+
+                  {/* Top Action Bar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] shadow-xs">
+                    <div>
+                      <h2 className="text-sm sm:text-base font-bold text-[var(--foreground)] flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-amber-500" />
+                        <span>Experience Timeline Management</span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-normal">
+                          Live Sync
+                        </span>
+                      </h2>
+                      <p className="text-xs text-[var(--muted-fg)] mt-0.5">
+                        Add, edit, reorder, and manage your career milestones with roles, companies, dates, and achievements.
+                      </p>
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={handleOpenCreateExperience}
+                      className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-bold px-4 py-2 text-xs sm:text-sm shadow-md hover:shadow-amber-500/25 active:scale-[0.98] transition-all cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Add New Experience</span>
+                    </Button>
+                  </div>
+
+
+
+                  {/* Experience Items List */}
+                  {experienceList.length === 0 ? (
+                    <div className="text-center py-16 px-4 rounded-3xl border border-dashed border-[var(--border)] text-[var(--muted-fg)] bg-[var(--card-bg)]/50">
+                      <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-40 text-amber-500" />
+                      <p className="text-sm font-bold text-[var(--foreground)]">No experience entries found.</p>
+                      <p className="text-xs text-[var(--muted-fg)] mt-1 max-w-sm mx-auto">
+                        Click &quot;Add New Experience&quot; above to create your first career timeline milestone.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {experienceList.map((exp, idx) => (
+                        <div
+                          key={exp.id || idx}
+                          className="group rounded-2xl sm:rounded-3xl border border-[var(--border)] bg-[var(--card-bg)] p-5 sm:p-6 shadow-xs hover:border-amber-500/40 hover:shadow-md transition-all space-y-4"
+                        >
+                          {/* Card Top Meta */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border)] pb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="h-6 w-6 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono text-xs font-bold flex items-center justify-center border border-amber-500/20">
+                                #{idx + 1}
+                              </span>
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-mono text-xs font-semibold">
+                                <Calendar className="h-3 w-3" />
+                                <span>{exp.period}</span>
+                              </div>
+                              {exp.location && (
+                                <div className="inline-flex items-center gap-1 text-xs text-[var(--muted-fg)]">
+                                  <MapPin className="h-3 w-3 text-amber-500" />
+                                  <span>{exp.location}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-1 self-end sm:self-auto">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleMoveExperience(idx, "up")}
+                                disabled={idx === 0}
+                                title="Move Up"
+                                className="h-7 w-7 p-0 cursor-pointer disabled:opacity-30"
+                              >
+                                <ChevronUp className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleMoveExperience(idx, "down")}
+                                disabled={idx === experienceList.length - 1}
+                                title="Move Down"
+                                className="h-7 w-7 p-0 cursor-pointer disabled:opacity-30"
+                              >
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenEditExperience(exp)}
+                                className="h-7 px-2.5 text-xs gap-1 cursor-pointer"
+                              >
+                                <Pencil className="h-3 w-3" />
+                                <span>Edit</span>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleDeleteExperience(
+                                    exp.id || (exp as unknown as { _id?: string })._id || ""
+                                  )
+                                }
+                                disabled={
+                                  deletingExpId ===
+                                  (exp.id || (exp as unknown as { _id?: string })._id)
+                                }
+                                className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-500/10 border-red-500/30 cursor-pointer"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Role and Title */}
+                          <div className="space-y-1">
+                            <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)] flex items-center gap-2">
+                              <span>{exp.role}</span>
+                            </h3>
+                            <div className="text-xs sm:text-sm font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                              <Building2 className="h-3.5 w-3.5" />
+                              <span>{exp.title}</span>
+                            </div>
+                          </div>
+
+                          {/* Description */}
+                          <div className="text-xs sm:text-sm text-[var(--muted-fg)] leading-relaxed whitespace-pre-line bg-[var(--muted)]/40 p-3.5 rounded-xl border border-[var(--border)]/60">
+                            {exp.description}
+                          </div>
+
+                          {/* Tech Stack Chips */}
+                          {exp.technologies && exp.technologies.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {exp.technologies.map((t, tIdx) => (
+                                <span
+                                  key={tIdx}
+                                  className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-[var(--muted)] text-[var(--foreground)] border border-[var(--border)]"
+                                >
+                                  {t}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Tab: Messages */}
               {activeTab === "messages" && (
                 <div className="space-y-3">
@@ -2413,305 +2824,7 @@ export default function AdminPage() {
                     </Button>
                   </div>
 
-                  {/* Add / Edit Project Modal Dialog */}
-                  <AnimatePresence>
-                    {showProjectModal && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                          transition={{ duration: 0.2 }}
-                          className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--border)] rounded-3xl shadow-2xl overflow-hidden my-8"
-                        >
-                          {/* Modal Header */}
-                          <div className="flex items-center justify-between p-6 border-b border-[var(--border)] bg-[var(--muted)]/40">
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                                <FolderGit2 className="h-5 w-5" />
-                              </div>
-                              <div>
-                                <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)]">
-                                  {editingProjectId ? "Edit Project" : "Create New Project"}
-                                </h3>
-                                <p className="text-xs text-[var(--muted-fg)]">
-                                  {editingProjectId ? "Update project details and Cloudinary media." : "Add a project to showcase in your portfolio."}
-                                </p>
-                              </div>
-                            </div>
 
-                            <button
-                              onClick={() => setShowProjectModal(false)}
-                              className="h-8 w-8 rounded-full bg-[var(--muted)] hover:bg-[var(--border)] text-[var(--muted-fg)] hover:text-[var(--foreground)] flex items-center justify-center transition-colors cursor-pointer"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-
-                          {/* Modal Form */}
-                          <form onSubmit={handleSaveProject} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-                            {projectError && (
-                              <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
-                                <AlertCircle className="h-4 w-4 shrink-0" />
-                                <span>{projectError}</span>
-                              </div>
-                            )}
-
-                            {/* Project Title & Category */}
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                              <div className="sm:col-span-8 space-y-1.5">
-                                <Label htmlFor="projTitle" className="text-xs font-semibold">
-                                  Project Title *
-                                </Label>
-                                <Input
-                                  id="projTitle"
-                                  value={projectForm.title}
-                                  onChange={(e) =>
-                                    setProjectForm((prev) => ({ ...prev, title: e.target.value }))
-                                  }
-                                  placeholder="Enterprise ERP & Platform"
-                                  className="text-xs sm:text-sm bg-[var(--background)]"
-                                  required
-                                />
-                              </div>
-
-                              <div className="sm:col-span-4 space-y-1.5">
-                                <Label htmlFor="projCategory" className="text-xs font-semibold">
-                                  Category
-                                </Label>
-                                <select
-                                  id="projCategory"
-                                  value={projectForm.category}
-                                  onChange={(e) =>
-                                    setProjectForm((prev) => ({ ...prev, category: e.target.value }))
-                                  }
-                                  className="w-full h-9 rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-1 text-xs text-[var(--foreground)] focus:outline-hidden focus:ring-2 focus:ring-amber-500"
-                                >
-                                  <option value="Full-Stack">Full-Stack</option>
-                                  <option value="Cloud & APIs">Cloud &amp; APIs</option>
-                                  <option value="Web Apps">Web Apps</option>
-                                  <option value="Backend">Backend</option>
-                                  <option value="Mobile Apps">Mobile Apps</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            {/* Description */}
-                            <div className="space-y-1.5">
-                              <Label htmlFor="projDesc" className="text-xs font-semibold">
-                                Description *
-                              </Label>
-                              <textarea
-                                id="projDesc"
-                                value={projectForm.description}
-                                onChange={(e) =>
-                                  setProjectForm((prev) => ({ ...prev, description: e.target.value }))
-                                }
-                                rows={3}
-                                placeholder="Describe the architecture, key problems solved, and real-world impact..."
-                                className="w-full rounded-md border border-[var(--border)] bg-[var(--background)] p-3 text-xs sm:text-sm text-[var(--foreground)] focus:outline-hidden focus:ring-2 focus:ring-amber-500 leading-relaxed"
-                                required
-                              />
-                            </div>
-
-                            {/* Tech Stack Tags Input */}
-                            <div className="space-y-1.5">
-                              <div className="flex items-center justify-between">
-                                <Label htmlFor="projTags" className="text-xs font-semibold flex items-center gap-1.5">
-                                  <Tag className="h-3.5 w-3.5 text-amber-500" />
-                                  <span>Tech Stack (Comma-Separated)</span>
-                                </Label>
-                                <span className="text-[10px] text-[var(--muted-fg)]">e.g. Java 21, Spring Boot, React, Next.js, Docker</span>
-                              </div>
-                              <Input
-                                id="projTags"
-                                value={projectForm.tagsInput}
-                                onChange={(e) =>
-                                  setProjectForm((prev) => ({ ...prev, tagsInput: e.target.value }))
-                                }
-                                placeholder="Java 21, Spring Boot, Next.js, PostgreSQL, Docker"
-                                className="text-xs sm:text-sm bg-[var(--background)] font-mono"
-                              />
-                            </div>
-
-                            {/* Cloudinary Project Image Upload */}
-                            <div className="space-y-2 p-4 rounded-2xl bg-[var(--muted)]/40 border border-[var(--border)]">
-                              <Label className="text-xs font-semibold flex items-center gap-1.5">
-                                <ImageIcon className="h-3.5 w-3.5 text-amber-500" />
-                                <span>Project Media Screenshot (Cloudinary) *</span>
-                              </Label>
-
-                              {projectImageUploadError && (
-                                <p className="text-xs text-red-500">{projectImageUploadError}</p>
-                              )}
-
-                              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                                {/* Image Preview Thumbnail */}
-                                {projectForm.imageUrl ? (
-                                  <div className="relative h-24 w-36 rounded-xl overflow-hidden border border-[var(--border)] bg-zinc-900 shrink-0">
-                                    <img
-                                      src={projectForm.imageUrl}
-                                      alt="Project Preview"
-                                      className="h-full w-full object-cover"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setProjectForm((prev) => ({ ...prev, imageUrl: "", cloudinaryPublicId: "" }))
-                                      }
-                                      className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-red-600 transition-colors cursor-pointer"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div className="h-24 w-36 rounded-xl border-2 border-dashed border-[var(--border)] flex flex-col items-center justify-center text-[var(--muted-fg)] shrink-0 bg-[var(--background)]">
-                                    <ImageIcon className="h-6 w-6 opacity-40 mb-1" />
-                                    <span className="text-[10px]">No image yet</span>
-                                  </div>
-                                )}
-
-                                {/* Upload Controls */}
-                                <div className="space-y-2 flex-1 w-full">
-                                  <div className="flex items-center gap-2">
-                                    <label className="cursor-pointer inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-semibold transition-colors">
-                                      <UploadCloud className="h-3.5 w-3.5" />
-                                      <span>
-                                        {uploadingProjectImage ? "Uploading to Cloudinary..." : "Upload Screenshot"}
-                                      </span>
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={onProjectImageFileChange}
-                                        disabled={uploadingProjectImage}
-                                        className="hidden"
-                                      />
-                                    </label>
-                                    {uploadingProjectImage && (
-                                      <RefreshCw className="h-3.5 w-3.5 animate-spin text-amber-500" />
-                                    )}
-                                  </div>
-
-                                  <div className="space-y-1">
-                                    <span className="text-[10px] text-[var(--muted-fg)]">Or provide direct Image URL:</span>
-                                    <Input
-                                      value={projectForm.imageUrl}
-                                      onChange={(e) =>
-                                        setProjectForm((prev) => ({ ...prev, imageUrl: e.target.value }))
-                                      }
-                                      placeholder="https://images.unsplash.com/..."
-                                      className="text-xs bg-[var(--background)]"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* URLs: Live Demo & GitHub */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <div className="space-y-1.5">
-                                <Label htmlFor="projLiveUrl" className="text-xs font-semibold flex items-center gap-1.5">
-                                  <Globe className="h-3.5 w-3.5 text-amber-500" />
-                                  <span>Live Demo URL</span>
-                                </Label>
-                                <Input
-                                  id="projLiveUrl"
-                                  value={projectForm.liveUrl}
-                                  onChange={(e) =>
-                                    setProjectForm((prev) => ({ ...prev, liveUrl: e.target.value }))
-                                  }
-                                  placeholder="https://yourproject.com"
-                                  className="text-xs sm:text-sm bg-[var(--background)] font-mono"
-                                />
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <Label htmlFor="projGithubUrl" className="text-xs font-semibold flex items-center gap-1.5">
-                                  <Code2 className="h-3.5 w-3.5 text-amber-500" />
-                                  <span>GitHub Repository URL</span>
-                                </Label>
-                                <Input
-                                  id="projGithubUrl"
-                                  value={projectForm.githubUrl}
-                                  onChange={(e) =>
-                                    setProjectForm((prev) => ({ ...prev, githubUrl: e.target.value }))
-                                  }
-                                  placeholder="https://github.com/user/repo"
-                                  className="text-xs sm:text-sm bg-[var(--background)] font-mono"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Featured & Order */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-2xl bg-[var(--muted)]/40 border border-[var(--border)]">
-                              <label className="flex items-center gap-2.5 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={projectForm.featured}
-                                  onChange={(e) =>
-                                    setProjectForm((prev) => ({ ...prev, featured: e.target.checked }))
-                                  }
-                                  className="h-4 w-4 rounded-sm border-[var(--border)] text-amber-500 focus:ring-amber-500"
-                                />
-                                <div>
-                                  <span className="text-xs font-semibold text-[var(--foreground)] flex items-center gap-1">
-                                    <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                                    <span>Featured Project</span>
-                                  </span>
-                                  <p className="text-[10px] text-[var(--muted-fg)]">Highlight at top of portfolio</p>
-                                </div>
-                              </label>
-
-                              <div className="flex items-center justify-between gap-2">
-                                <Label htmlFor="projOrder" className="text-xs font-semibold">
-                                  Display Order:
-                                </Label>
-                                <Input
-                                  id="projOrder"
-                                  type="number"
-                                  value={projectForm.order}
-                                  onChange={(e) =>
-                                    setProjectForm((prev) => ({ ...prev, order: Number(e.target.value) }))
-                                  }
-                                  className="w-20 text-xs bg-[var(--background)] text-center font-mono"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Modal Actions */}
-                            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border)]">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowProjectModal(false)}
-                                className="text-xs"
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                type="submit"
-                                disabled={savingProject || uploadingProjectImage}
-                                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-bold px-6 text-xs cursor-pointer"
-                              >
-                                {savingProject ? (
-                                  <>
-                                    <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                                    <span>Saving to MongoDB...</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Check className="h-3.5 w-3.5 mr-1" />
-                                    <span>{editingProjectId ? "Update Project" : "Save Project"}</span>
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-                          </form>
-                        </motion.div>
-                      </div>
-                    )}
-                  </AnimatePresence>
 
                   {/* Projects List Grid */}
                   {projects.length === 0 ? (
@@ -2863,6 +2976,507 @@ export default function AdminPage() {
       <footer className="relative z-20 py-4 px-6 text-center text-xs text-[var(--muted-fg)] border-t border-[var(--border)] bg-[var(--background)]/60">
         <p>Portfolio Admin Gateway &bull; Protected &bull; Authorized Personnel Only</p>
       </footer>
+
+      {/* ========================================================================= */}
+      {/* Root Viewport Overlays (Modals mounted at root to prevent navbar clipping) */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {showExperienceModal && (
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
+            onClick={() => setShowExperienceModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-amber-400/35 dark:border-amber-500/30 rounded-3xl shadow-2xl p-5 sm:p-6 my-auto max-h-[90vh] flex flex-col overflow-hidden"
+            >
+              <BorderBeam duration={8} size={140} colorFrom="#f59e0b" colorTo="#eab308" borderWidth={1.5} />
+
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b border-[var(--border)] pb-4 mb-4 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                    <Briefcase className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-[var(--foreground)]">
+                      {editingExpId ? "Edit Experience Entry" : "Add New Experience Entry"}
+                    </h3>
+                    <p className="text-xs text-[var(--muted-fg)]">
+                      {editingExpId ? "Update existing career details" : "Add a new role to your timeline"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowExperienceModal(false)}
+                  className="h-8 w-8 rounded-full border border-[var(--border)] flex items-center justify-center text-[var(--muted-fg)] hover:text-[var(--foreground)] hover:bg-[var(--muted)] transition-colors cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Modal Form */}
+              <form onSubmit={handleSaveExperience} className="space-y-4 overflow-y-auto pr-1 flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="expRole" className="text-xs font-semibold">
+                      Job Role / Title <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="expRole"
+                      value={experienceForm.role}
+                      onChange={(e) =>
+                        setExperienceForm((prev) => ({ ...prev, role: e.target.value }))
+                      }
+                      placeholder="e.g. Associate Software Engineer"
+                      className="text-xs sm:text-sm bg-[var(--background)]"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="expTitle" className="text-xs font-semibold">
+                      Company / Organization <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="expTitle"
+                      value={experienceForm.title}
+                      onChange={(e) =>
+                        setExperienceForm((prev) => ({ ...prev, title: e.target.value }))
+                      }
+                      placeholder="e.g. Speshway Solutions"
+                      className="text-xs sm:text-sm bg-[var(--background)]"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5 sm:col-span-1">
+                    <Label htmlFor="expPeriod" className="text-xs font-semibold">
+                      Date / Period <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="expPeriod"
+                      value={experienceForm.period}
+                      onChange={(e) =>
+                        setExperienceForm((prev) => ({ ...prev, period: e.target.value }))
+                      }
+                      placeholder="e.g. Jan 2024 – Present"
+                      className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-1">
+                    <Label htmlFor="expLocation" className="text-xs font-semibold">
+                      Location
+                    </Label>
+                    <Input
+                      id="expLocation"
+                      value={experienceForm.location}
+                      onChange={(e) =>
+                        setExperienceForm((prev) => ({ ...prev, location: e.target.value }))
+                      }
+                      placeholder="e.g. Hyderabad, India / Remote"
+                      className="text-xs sm:text-sm bg-[var(--background)]"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-1">
+                    <Label htmlFor="expOrder" className="text-xs font-semibold">
+                      Timeline Order
+                    </Label>
+                    <Input
+                      id="expOrder"
+                      type="number"
+                      min="1"
+                      value={experienceForm.order}
+                      onChange={(e) =>
+                        setExperienceForm((prev) => ({ ...prev, order: Number(e.target.value) || 1 }))
+                      }
+                      placeholder="1"
+                      className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="expDesc" className="text-xs font-semibold flex items-center justify-between">
+                    <span>Role Description &amp; Key Achievements <span className="text-red-500">*</span></span>
+                    <span className="text-[11px] text-[var(--muted-fg)] font-normal">Supports multi-line bullet points</span>
+                  </Label>
+                  <textarea
+                    id="expDesc"
+                    rows={5}
+                    value={experienceForm.description}
+                    onChange={(e) =>
+                      setExperienceForm((prev) => ({ ...prev, description: e.target.value }))
+                    }
+                    placeholder="Architected scalable microservices using Java and Spring Boot. Optimized PostgreSQL queries and built reactive Next.js frontends..."
+                    className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] p-3 text-xs sm:text-sm text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 focus-visible:border-amber-500 transition-all resize-y leading-relaxed"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="expTech" className="text-xs font-semibold flex items-center justify-between">
+                    <span>Core Technologies &amp; Tools</span>
+                    <span className="text-[11px] text-[var(--muted-fg)] font-normal">Comma-separated</span>
+                  </Label>
+                  <Input
+                    id="expTech"
+                    value={experienceForm.technologiesInput}
+                    onChange={(e) =>
+                      setExperienceForm((prev) => ({ ...prev, technologiesInput: e.target.value }))
+                    }
+                    placeholder="Java, Spring Boot, Next.js, TypeScript, PostgreSQL, Docker, REST APIs"
+                    className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                  />
+                </div>
+
+                {/* Modal Action Buttons */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border)]">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowExperienceModal(false)}
+                    className="text-xs cursor-pointer"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={savingExperience}
+                    className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-bold text-xs px-5 cursor-pointer shadow-md hover:shadow-amber-500/25"
+                  >
+                    {savingExperience ? (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                        <span>Saving to MongoDB...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-3.5 w-3.5 mr-1.5" />
+                        <span>{editingExpId ? "Update Experience" : "Save Experience"}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showProjectModal && (
+          <div
+            className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
+            onClick={() => setShowProjectModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--border)] rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-5 sm:p-6 border-b border-[var(--border)] bg-[var(--muted)]/40 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <FolderGit2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold text-[var(--foreground)]">
+                      {editingProjectId ? "Edit Project" : "Create New Project"}
+                    </h3>
+                    <p className="text-xs text-[var(--muted-fg)]">
+                      {editingProjectId ? "Update project details and Cloudinary media." : "Add a project to showcase in your portfolio."}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowProjectModal(false)}
+                  className="h-8 w-8 rounded-full bg-[var(--muted)] hover:bg-[var(--border)] text-[var(--muted-fg)] hover:text-[var(--foreground)] flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Modal Form */}
+              <form onSubmit={handleSaveProject} className="p-5 sm:p-6 space-y-4 overflow-y-auto pr-1 flex-1">
+                {projectError && (
+                  <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{projectError}</span>
+                  </div>
+                )}
+
+                {/* Project Title & Category */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                  <div className="sm:col-span-8 space-y-1.5">
+                    <Label htmlFor="projTitle" className="text-xs font-semibold">
+                      Project Title *
+                    </Label>
+                    <Input
+                      id="projTitle"
+                      value={projectForm.title}
+                      onChange={(e) =>
+                        setProjectForm((prev) => ({ ...prev, title: e.target.value }))
+                      }
+                      placeholder="Enterprise ERP & Platform"
+                      className="text-xs sm:text-sm bg-[var(--background)]"
+                      required
+                    />
+                  </div>
+
+                  <div className="sm:col-span-4 space-y-1.5">
+                    <Label htmlFor="projCategory" className="text-xs font-semibold">
+                      Category
+                    </Label>
+                    <select
+                      id="projCategory"
+                      value={projectForm.category}
+                      onChange={(e) =>
+                        setProjectForm((prev) => ({ ...prev, category: e.target.value }))
+                      }
+                      className="w-full h-9 rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-1 text-xs text-[var(--foreground)] focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="Full-Stack">Full-Stack</option>
+                      <option value="Cloud & APIs">Cloud &amp; APIs</option>
+                      <option value="Web Apps">Web Apps</option>
+                      <option value="Backend">Backend</option>
+                      <option value="Mobile Apps">Mobile Apps</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="projDesc" className="text-xs font-semibold">
+                    Description *
+                  </Label>
+                  <textarea
+                    id="projDesc"
+                    value={projectForm.description}
+                    onChange={(e) =>
+                      setProjectForm((prev) => ({ ...prev, description: e.target.value }))
+                    }
+                    rows={3}
+                    placeholder="Describe the architecture, key problems solved, and real-world impact..."
+                    className="w-full rounded-md border border-[var(--border)] bg-[var(--background)] p-3 text-xs sm:text-sm text-[var(--foreground)] focus:outline-hidden focus:ring-2 focus:ring-amber-500 leading-relaxed"
+                    required
+                  />
+                </div>
+
+                {/* Tech Stack Tags Input */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="projTags" className="text-xs font-semibold flex items-center gap-1.5">
+                      <Tag className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Tech Stack (Comma-Separated)</span>
+                    </Label>
+                    <span className="text-[10px] text-[var(--muted-fg)]">e.g. Java 21, Spring Boot, React, Next.js, Docker</span>
+                  </div>
+                  <Input
+                    id="projTags"
+                    value={projectForm.tagsInput}
+                    onChange={(e) =>
+                      setProjectForm((prev) => ({ ...prev, tagsInput: e.target.value }))
+                    }
+                    placeholder="Java 21, Spring Boot, Next.js, PostgreSQL, Docker"
+                    className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                  />
+                </div>
+
+                {/* Cloudinary Project Image Upload */}
+                <div className="space-y-2 p-4 rounded-2xl bg-[var(--muted)]/40 border border-[var(--border)]">
+                  <Label className="text-xs font-semibold flex items-center gap-1.5">
+                    <ImageIcon className="h-3.5 w-3.5 text-amber-500" />
+                    <span>Project Media Screenshot (Cloudinary) *</span>
+                  </Label>
+
+                  {projectImageUploadError && (
+                    <p className="text-xs text-red-500">{projectImageUploadError}</p>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                    {/* Image Preview Thumbnail */}
+                    {projectForm.imageUrl ? (
+                      <div className="relative h-24 w-36 rounded-xl overflow-hidden border border-[var(--border)] bg-zinc-900 shrink-0">
+                        <img
+                          src={projectForm.imageUrl}
+                          alt="Project Preview"
+                          className="h-full w-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProjectForm((prev) => ({ ...prev, imageUrl: "", cloudinaryPublicId: "" }))
+                          }
+                          className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-red-600 transition-colors cursor-pointer"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="h-24 w-36 rounded-xl border-2 border-dashed border-[var(--border)] flex flex-col items-center justify-center text-[var(--muted-fg)] shrink-0 bg-[var(--background)]">
+                        <ImageIcon className="h-6 w-6 opacity-40 mb-1" />
+                        <span className="text-[10px]">No image yet</span>
+                      </div>
+                    )}
+
+                    {/* Upload Controls */}
+                    <div className="space-y-2 flex-1 w-full">
+                      <div className="flex items-center gap-2">
+                        <label className="cursor-pointer inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-semibold transition-colors">
+                          <UploadCloud className="h-3.5 w-3.5" />
+                          <span>
+                            {uploadingProjectImage ? "Uploading to Cloudinary..." : "Upload Screenshot"}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={onProjectImageFileChange}
+                            disabled={uploadingProjectImage}
+                            className="hidden"
+                          />
+                        </label>
+                        {uploadingProjectImage && (
+                          <RefreshCw className="h-3.5 w-3.5 animate-spin text-amber-500" />
+                        )}
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-[var(--muted-fg)]">Or provide direct Image URL:</span>
+                        <Input
+                          value={projectForm.imageUrl}
+                          onChange={(e) =>
+                            setProjectForm((prev) => ({ ...prev, imageUrl: e.target.value }))
+                          }
+                          placeholder="https://images.unsplash.com/..."
+                          className="text-xs bg-[var(--background)]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* URLs: Live Demo & GitHub */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="projLiveUrl" className="text-xs font-semibold flex items-center gap-1.5">
+                      <Globe className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Live Demo URL</span>
+                    </Label>
+                    <Input
+                      id="projLiveUrl"
+                      value={projectForm.liveUrl}
+                      onChange={(e) =>
+                        setProjectForm((prev) => ({ ...prev, liveUrl: e.target.value }))
+                      }
+                      placeholder="https://yourproject.com"
+                      className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="projGithubUrl" className="text-xs font-semibold flex items-center gap-1.5">
+                      <Code2 className="h-3.5 w-3.5 text-amber-500" />
+                      <span>GitHub Repository URL</span>
+                    </Label>
+                    <Input
+                      id="projGithubUrl"
+                      value={projectForm.githubUrl}
+                      onChange={(e) =>
+                        setProjectForm((prev) => ({ ...prev, githubUrl: e.target.value }))
+                      }
+                      placeholder="https://github.com/user/repo"
+                      className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Featured & Order */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-2xl bg-[var(--muted)]/40 border border-[var(--border)]">
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={projectForm.featured}
+                      onChange={(e) =>
+                        setProjectForm((prev) => ({ ...prev, featured: e.target.checked }))
+                      }
+                      className="h-4 w-4 rounded-sm border-[var(--border)] text-amber-500 focus:ring-amber-500"
+                    />
+                    <div>
+                      <span className="text-xs font-semibold text-[var(--foreground)] flex items-center gap-1">
+                        <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                        <span>Featured Project</span>
+                      </span>
+                      <p className="text-[10px] text-[var(--muted-fg)]">Highlight at top of portfolio</p>
+                    </div>
+                  </label>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <Label htmlFor="projOrder" className="text-xs font-semibold">
+                      Display Order:
+                    </Label>
+                    <Input
+                      id="projOrder"
+                      type="number"
+                      value={projectForm.order}
+                      onChange={(e) =>
+                        setProjectForm((prev) => ({ ...prev, order: Number(e.target.value) }))
+                      }
+                      className="w-20 text-xs bg-[var(--background)] text-center font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Modal Actions */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border)]">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowProjectModal(false)}
+                    className="text-xs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={savingProject || uploadingProjectImage}
+                    className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-bold px-6 text-xs cursor-pointer"
+                  >
+                    {savingProject ? (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                        <span>Saving to MongoDB...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-3.5 w-3.5 mr-1" />
+                        <span>{editingProjectId ? "Update Project" : "Save Project"}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

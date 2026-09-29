@@ -17,13 +17,25 @@ export async function GET() {
   }
 
   try {
-    await connectToDatabase();
-    const content = await PortfolioContent.findOne({ key: "home" }).lean();
+    let content = await PortfolioContent.findOne({ key: "home" }).lean();
+    if (!content) {
+      content = await PortfolioContent.findOne({}).lean();
+    }
+
+    const responseContent = content
+      ? {
+          ...content,
+          experience:
+            Array.isArray(content.experience)
+              ? content.experience
+              : DEFAULT_PORTFOLIO_CONTENT.experience,
+        }
+      : DEFAULT_PORTFOLIO_CONTENT;
 
     return NextResponse.json(
       {
         success: true,
-        content: content || DEFAULT_PORTFOLIO_CONTENT,
+        content: responseContent,
       },
       {
         headers: {
@@ -48,7 +60,7 @@ export async function PUT(request: Request) {
     const body = await request.json();
     await connectToDatabase();
 
-    const existing = await PortfolioContent.findOne({ key: "home" }).lean();
+    const existing = (await PortfolioContent.findOne({ key: "home" }).lean()) || (await PortfolioContent.findOne({}).lean());
 
     const updatePayload: Record<string, unknown> = {
       key: "home",
@@ -106,6 +118,28 @@ export async function PUT(request: Request) {
         terminalCtaText: body.about?.terminalCtaText !== undefined ? body.about.terminalCtaText.trim() : (existing?.about?.terminalCtaText ?? DEFAULT_PORTFOLIO_CONTENT.about.terminalCtaText),
         terminalCtaUrl: body.about?.terminalCtaUrl !== undefined ? body.about.terminalCtaUrl.trim() : (existing?.about?.terminalCtaUrl ?? DEFAULT_PORTFOLIO_CONTENT.about.terminalCtaUrl),
       };
+    }
+
+    if (body.experience !== undefined) {
+      if (Array.isArray(body.experience)) {
+        updatePayload.experience = body.experience.map((item: Record<string, unknown>, idx: number) => ({
+          id: String(item.id || `exp-${Date.now()}-${idx}`),
+          period: String(item.period || "").trim(),
+          title: String(item.title || "").trim(),
+          role: String(item.role || "").trim(),
+          location: String(item.location || "").trim(),
+          description: String(item.description || "").trim(),
+          technologies: Array.isArray(item.technologies)
+            ? item.technologies.map((t) => String(t).trim()).filter(Boolean)
+            : typeof item.technologies === "string"
+            ? (item.technologies as string)
+                .split(",")
+                .map((t: string) => t.trim())
+                .filter(Boolean)
+            : [],
+          order: typeof item.order === "number" ? item.order : idx + 1,
+        }));
+      }
     }
 
     const updated = await PortfolioContent.findOneAndUpdate(

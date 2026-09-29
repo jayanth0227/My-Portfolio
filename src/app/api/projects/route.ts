@@ -14,15 +14,27 @@ export async function GET() {
       });
     }
 
-    const projects = await Project.find({})
+    let projects = await Project.find({})
       .sort({ featured: -1, order: 1, createdAt: -1 })
       .lean();
 
+    // If database is connected but no projects exist in the collection yet,
+    // automatically seed DEFAULT_PROJECTS so each project gets a real MongoDB ObjectId
     if (!projects || projects.length === 0) {
-      return NextResponse.json({
-        projects: DEFAULT_PROJECTS,
-        source: "default",
-      });
+      try {
+        const seedPayload = DEFAULT_PROJECTS.map(({ _id, ...rest }) => rest);
+        await Project.insertMany(seedPayload);
+        projects = await Project.find({})
+          .sort({ featured: -1, order: 1, createdAt: -1 })
+          .lean();
+        return NextResponse.json({ projects, source: "database-seeded" });
+      } catch (seedError) {
+        console.error("Auto-seed default projects error:", seedError);
+        return NextResponse.json({
+          projects: DEFAULT_PROJECTS,
+          source: "default",
+        });
+      }
     }
 
     return NextResponse.json({ projects: projects || [], source: "database" });
