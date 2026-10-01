@@ -237,8 +237,6 @@ export function ExperienceTimeline() {
   // Dynamic Parallax Floating Background Offsets
   const bgOrb1Y = useTransform(smoothProgress, [0, 1], [-100, 120]);
   const bgOrb2Y = useTransform(smoothProgress, [0, 1], [80, -100]);
-  const bgSymbolRotate1 = useTransform(smoothProgress, [0, 1], [-15, 30]);
-  const bgSymbolRotate2 = useTransform(smoothProgress, [0, 1], [25, -25]);
   const bgTextY = useTransform(smoothProgress, [0, 1], [-50, 60]);
 
   // Dynamic Beam Tracing Height for Central Line
@@ -269,22 +267,6 @@ export function ExperienceTimeline() {
           style={{ y: bgOrb2Y }}
           className="absolute bottom-10 right-10 h-[400px] w-[400px] rounded-full bg-amber-500/5 blur-3xl"
         />
-
-        {/* Parallax Floating Code Watermark 1 */}
-        <motion.div
-          style={{ y: bgOrb1Y, rotate: bgSymbolRotate1 }}
-          className="absolute top-24 left-[8%] text-7xl sm:text-9xl font-mono font-black text-amber-500/[0.03] dark:text-amber-400/[0.04] hidden md:block"
-        >
-          {"<Experience />"}
-        </motion.div>
-
-        {/* Parallax Floating Code Watermark 2 */}
-        <motion.div
-          style={{ y: bgOrb2Y, rotate: bgSymbolRotate2 }}
-          className="absolute bottom-28 right-[6%] text-8xl sm:text-[140px] font-mono font-black text-amber-500/[0.03] dark:text-amber-400/[0.04] hidden md:block"
-        >
-          {"{ ...timeline }"}
-        </motion.div>
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

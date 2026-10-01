@@ -13,28 +13,25 @@ import Projects from "@/components/Projects";
 import ExperienceTimeline from "@/components/ExperienceTimeline";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { MagneticCursor } from "@/components/ui/magnetic-cursor";
+import Contact from "@/components/Contact";
 
 export default function Home() {
-  const [loading, setLoading] = useState(false);
-  const [showLoader, setShowLoader] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showLoader, setShowLoader] = useState(true);
 
   useEffect(() => {
-    // Only show loading screen once per session on initial visit
-    const hasLoaded = sessionStorage.getItem("portfolio_has_loaded");
-    if (!hasLoaded) {
-      setLoading(true);
-      setShowLoader(true);
-      sessionStorage.setItem("portfolio_has_loaded", "true");
+    // Trigger preloading animation on page load / refresh
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1600);
 
-      const timer = setTimeout(() => setLoading(false), 1600);
-      return () => clearTimeout(timer);
-    }
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!loading && showLoader) {
       // Allow fade-out animation to complete before unmounting
-      const cleanup = setTimeout(() => setShowLoader(false), 600);
+      const cleanup = setTimeout(() => setShowLoader(false), 700);
       return () => clearTimeout(cleanup);
     }
   }, [loading, showLoader]);
@@ -112,8 +109,8 @@ export default function Home() {
           <ExperienceTimeline />
         </section>
 
-        {/* 7th Section Anchor (Contact) */}
-        <div id="contact" className="scroll-mt-0 pointer-events-none" />
+        {/* 7th Section: Interactive Contact Section with MagicUI iPhone */}
+        <Contact />
 
         {/* Quick Action: Smooth Scroll to Top Button */}
         <ScrollToTop />
