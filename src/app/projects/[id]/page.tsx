@@ -23,6 +23,7 @@ import { DEFAULT_PROJECTS } from "@/lib/projectDefaults";
 import { SpotlightNavbar } from "@/components/ui/spotlight-navbar";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { StripedPattern } from "@/registry/magicui/striped-pattern";
+import Footer from "@/components/Footer";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -311,6 +312,11 @@ export default function ProjectDetailPage() {
 
             </div>
           </div>
+        </div>
+
+        {/* Global Professional Footer */}
+        <div className="mt-16 sm:mt-24">
+          <Footer />
         </div>
       </main>
 

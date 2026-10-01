@@ -113,8 +113,8 @@ export function MagneticCursor({
           isVisible ? "opacity-100" : "opacity-0"
         } ${
           isHovering || isMagnetic
-            ? "border-2 border-amber-400/80 dark:border-amber-400/90 bg-amber-500/15 shadow-[0_0_20px_rgba(245,158,11,0.4)] backdrop-blur-[1px]"
-            : "border border-amber-500/50 dark:border-amber-400/50 bg-amber-500/5 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+            ? "border-2 border-amber-400/70 dark:border-amber-400/80 bg-amber-500/10"
+            : "border border-amber-500/40 dark:border-amber-400/40 bg-amber-500/5"
         }`}
         animate={{
           width: isMagnetic ? ringSize * 1.4 : ringSize,
@@ -134,7 +134,7 @@ export function MagneticCursor({
           width: dotSize,
           height: dotSize,
         }}
-        className={`pointer-events-none fixed top-0 left-0 z-[99999] rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 shadow-[0_0_8px_rgba(245,158,11,0.9)] transition-opacity duration-200 will-change-transform ${
+        className={`pointer-events-none fixed top-0 left-0 z-[99999] rounded-full bg-gradient-to-r from-amber-400 to-yellow-400 transition-opacity duration-200 will-change-transform ${
           isVisible ? "opacity-100" : "opacity-0"
         } ${isHovering ? "scale-125" : "scale-100"}`}
       />

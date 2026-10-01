@@ -305,7 +305,7 @@ export default function TechOrbit() {
               <div
                 onMouseEnter={() => setActiveTier(1)}
                 onMouseLeave={() => setActiveTier(null)}
-                className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 backdrop-blur-md cursor-pointer ${
+                className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 backdrop-blur-sm cursor-pointer ${
                   currentActiveTier === 1
                     ? "border-amber-500/80 bg-[var(--card-bg)]/90 shadow-lg shadow-amber-500/15 scale-[1.01]"
                     : "border-[var(--border)] bg-[var(--card-bg)]/55 hover:bg-[var(--card-bg)]/75 hover:border-amber-500/40"
@@ -337,7 +337,7 @@ export default function TechOrbit() {
               <div
                 onMouseEnter={() => setActiveTier(2)}
                 onMouseLeave={() => setActiveTier(null)}
-                className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 backdrop-blur-md cursor-pointer ${
+                className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 backdrop-blur-sm cursor-pointer ${
                   currentActiveTier === 2
                     ? "border-cyan-500/80 bg-[var(--card-bg)]/90 shadow-lg shadow-cyan-500/15 scale-[1.01]"
                     : "border-[var(--border)] bg-[var(--card-bg)]/55 hover:bg-[var(--card-bg)]/75 hover:border-cyan-500/40"
@@ -369,7 +369,7 @@ export default function TechOrbit() {
               <div
                 onMouseEnter={() => setActiveTier(3)}
                 onMouseLeave={() => setActiveTier(null)}
-                className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 backdrop-blur-md cursor-pointer ${
+                className={`p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 backdrop-blur-sm cursor-pointer ${
                   currentActiveTier === 3
                     ? "border-emerald-500/80 bg-[var(--card-bg)]/90 shadow-lg shadow-emerald-500/15 scale-[1.01]"
                     : "border-[var(--border)] bg-[var(--card-bg)]/55 hover:bg-[var(--card-bg)]/75 hover:border-emerald-500/40"
@@ -478,7 +478,7 @@ export default function TechOrbit() {
                 />
 
                 <div
-                  className="relative flex h-16 w-16 sm:h-18 sm:w-18 items-center justify-center rounded-2xl border-2 shadow-lg backdrop-blur-xl transition-all duration-300 select-none bg-white/95 dark:bg-zinc-900/95"
+                  className="relative flex h-16 w-16 sm:h-18 sm:w-18 items-center justify-center rounded-2xl border-2 shadow-lg backdrop-blur-sm transition-all duration-300 select-none bg-white/95 dark:bg-zinc-900/95"
                   style={{
                     borderColor: hoveredTech ? hoveredTech.color : "rgba(245, 158, 11, 0.6)",
                     boxShadow: hoveredTech

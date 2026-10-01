@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
+import { ContactData, ExperienceItem } from "@/lib/contentDefaults";
 
 export interface IExperienceItem {
   id: string;
@@ -59,6 +60,7 @@ export interface IPortfolioContent extends Document {
     terminalCtaUrl?: string;
   };
   experience: IExperienceItem[];
+  contact: ContactData;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -276,6 +278,114 @@ const PortfolioContentSchema: Schema = new Schema(
         order: { type: Number, default: 0 },
       },
     ],
+    contact: {
+      badgeText: {
+        type: String,
+        default: "GET IN TOUCH",
+        trim: true,
+      },
+      titleLine1: {
+        type: String,
+        default: "Let's Build Something",
+        trim: true,
+      },
+      titleLine2: {
+        type: String,
+        default: "Extraordinary",
+        trim: true,
+      },
+      description: {
+        type: String,
+        default:
+          "Have an upcoming project, freelance inquiry, engineering role, or want to explore scalable architectures? Explore the interactive dossier on mobile or reach out directly.",
+        trim: true,
+      },
+      statusLabel: {
+        type: String,
+        default: "CURRENT STATUS",
+        trim: true,
+      },
+      statusText: {
+        type: String,
+        default: "Available for Full-time Roles & High-Impact Projects",
+        trim: true,
+      },
+      responseTime: {
+        type: String,
+        default: "Avg. response < 2h",
+        trim: true,
+      },
+      email: {
+        type: String,
+        default: "chikkalajayanthsai@gmail.com",
+        trim: true,
+      },
+      phone: {
+        type: String,
+        default: "+91 9010253076",
+        trim: true,
+      },
+      location: {
+        type: String,
+        default: "Hyderabad, India • Remote / Hybrid",
+        trim: true,
+      },
+      linkedinUrl: {
+        type: String,
+        default: "https://www.linkedin.com/in/jayanth-sai-chikkala/",
+        trim: true,
+      },
+      githubUrl: {
+        type: String,
+        default: "https://github.com/jayanthsaichikkala",
+        trim: true,
+      },
+      instagramUrl: {
+        type: String,
+        default: "https://www.instagram.com/",
+        trim: true,
+      },
+      whatsappMessage: {
+        type: String,
+        default: "Hi Jayanth, I saw your portfolio!",
+        trim: true,
+      },
+      resumePdfUrl: {
+        type: String,
+        default: "",
+      },
+      resumePdfPublicId: {
+        type: String,
+        default: "",
+      },
+      avatarUrl: {
+        type: String,
+        default: "/profile.png",
+      },
+      avatarPublicId: {
+        type: String,
+        default: "",
+      },
+      dossierName: {
+        type: String,
+        default: "Jayanth Sai Chikkala",
+        trim: true,
+      },
+      dossierRole: {
+        type: String,
+        default: "Associate Software Engineer",
+        trim: true,
+      },
+      quickPrompts: {
+        type: [String],
+        default: [
+          "🚀 Discuss a new project",
+          "💼 Full-time job opportunity",
+          "☕ Coffee & tech chat",
+          "⚡ Backend / Spring Boot consultation",
+        ],
+      },
+    },
   },
   {
     timestamps: true,
@@ -293,4 +403,3 @@ const PortfolioContent: Model<IPortfolioContent> =
   mongoose.model<IPortfolioContent>("PortfolioContent", PortfolioContentSchema);
 
 export default PortfolioContent;
-

@@ -167,21 +167,8 @@ export default function InteractiveStripedBackground({
         }
       }
 
-      // Initialize subtle floating particles
-      const count = Math.min(particleCount, 25);
+      // Particles disabled for performance
       particles = [];
-      for (let i = 0; i < count; i++) {
-        particles.push({
-          x: Math.random() * (canvasW || 800),
-          y: Math.random() * (canvasH || 600),
-          vx: (Math.random() - 0.5) * 0.25 + 0.08,
-          vy: (Math.random() - 0.5) * 0.25 + 0.08,
-          size: Math.random() * 1.8 + 1,
-          alpha: Math.random() * 0.5 + 0.2,
-          phase: Math.random() * Math.PI * 2,
-          speed: Math.random() * 0.02 + 0.01,
-        });
-      }
     };
 
     let rect = canvas.getBoundingClientRect();
@@ -197,8 +184,8 @@ export default function InteractiveStripedBackground({
       }
     };
 
-    const springSpeed = 0.16;
-    const damping = 0.78;
+    const springSpeed = 0.12;
+    const damping = 0.82;
 
     const handleMouseMove = (e: MouseEvent) => {
       const cx = e.clientX - rect.left;
@@ -235,7 +222,7 @@ export default function InteractiveStripedBackground({
 
     const handleResize = () => {
       if (!canvas) return;
-      dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      dpr = 1;
       const parent = canvas.parentElement;
       canvasW = parent ? parent.clientWidth : window.innerWidth;
       canvasH = parent ? parent.clientHeight : window.innerHeight;
@@ -391,48 +378,9 @@ export default function InteractiveStripedBackground({
         }
       }
 
-      // 6. Render Subtle Floating Ambient Motion Particles
-      for (let p = 0; p < particles.length; p++) {
-        const pt = particles[p];
-        pt.phase += pt.speed;
-        pt.x += pt.vx;
-        pt.y += pt.vy;
-
-        if (pt.x < 0) pt.x = canvasW;
-        if (pt.x > canvasW) pt.x = 0;
-        if (pt.y < 0) pt.y = canvasH;
-        if (pt.y > canvasH) pt.y = 0;
-
-        const pulse = (Math.sin(pt.phase) + 1) * 0.5;
-        const currentAlpha = pt.alpha * (0.4 + 0.6 * pulse);
-
-        let mouseBoost = 0;
-        if (mouse.x > -1000 && mouse.y > -1000) {
-          const mdx = pt.x - mouse.x;
-          const mdy = pt.y - mouse.y;
-          const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
-          if (mDist < 160) {
-            mouseBoost = (1 - mDist / 160) * 0.7;
-          }
-        }
-
-        ctx.save();
-        ctx.fillStyle = colors.particle(currentAlpha + mouseBoost);
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, pt.size + mouseBoost * 1.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (pt.size > 2 || mouseBoost > 0.2) {
-          ctx.fillStyle = colors.glow1;
-          ctx.beginPath();
-          ctx.arc(pt.x, pt.y, (pt.size + mouseBoost * 2) * 2.2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.restore();
-      }
 
       // Gracefully pause animation loop when idle
-      if (!prefersReducedMotion && isVisible && (maxActivity > 0.005 || mouse.isInside)) {
+      if (!prefersReducedMotion && isVisible && (maxActivity > 0.02 || mouse.isInside)) {
         animationFrameId = requestAnimationFrame(render);
       } else {
         isAnimating = false;

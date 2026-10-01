@@ -118,7 +118,7 @@ html, body {
 /* Smooth theme transition for key properties without thrashing SVGs and motion */
 body, header, footer, section, nav, aside, article {
   transition-property: background-color, border-color, color;
-  transition-duration: 0.25s;
+  transition-duration: 0.15s;
   transition-timing-function: ease;
 }
 
@@ -248,11 +248,11 @@ div[data-nextjs-dev-indicator] {
 .id-card-hanging {
   transform-origin: top center;
   animation: id-card-entry-swing 1s ease-out both,
-             id-card-swing 6s ease-in-out 1s infinite;
+             id-card-swing 10s ease-in-out 1s infinite;
   will-change: transform;
 }
 
 .id-card-hanging:hover {
-  animation: id-card-swing 4s ease-in-out infinite;
+  animation: id-card-swing 8s ease-in-out infinite;
 }
 

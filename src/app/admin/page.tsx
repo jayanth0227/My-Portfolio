@@ -99,7 +99,7 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Dashboard Data State
-  const [activeTab, setActiveTab] = useState<"content" | "about" | "experience" | "messages" | "projects">("content");
+  const [activeTab, setActiveTab] = useState<"content" | "about" | "experience" | "contact" | "messages" | "projects">("content");
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [fetchingData, setFetchingData] = useState(false);
@@ -181,6 +181,39 @@ export default function AdminPage() {
   const [uploadingIdPhoto, setUploadingIdPhoto] = useState(false);
   const [uploadingCompanyLogo, setUploadingCompanyLogo] = useState(false);
   const [aboutUploadError, setAboutUploadError] = useState<string | null>(null);
+
+  // Contact Module CMS State
+  const [contactForm, setContactForm] = useState({
+    badgeText: "GET IN TOUCH",
+    titleLine1: "Let's Build Something",
+    titleLine2: "Extraordinary",
+    description:
+      "Have an upcoming project, freelance inquiry, engineering role, or want to explore scalable architectures? Explore the interactive dossier on mobile or reach out directly.",
+    statusLabel: "CURRENT STATUS",
+    statusText: "Available for Full-time Roles & High-Impact Projects",
+    responseTime: "Avg. response < 2h",
+    email: "chikkalajayanthsai@gmail.com",
+    phone: "+91 9010253076",
+    location: "Hyderabad, India • Remote / Hybrid",
+    linkedinUrl: "https://www.linkedin.com/in/jayanth-sai-chikkala/",
+    githubUrl: "https://github.com/jayanthsaichikkala",
+    instagramUrl: "https://www.instagram.com/",
+    whatsappMessage: "Hi Jayanth, I saw your portfolio!",
+    resumePdfUrl: "",
+    resumePdfPublicId: "",
+    avatarUrl: "/profile.png",
+    avatarPublicId: "",
+    dossierName: "Jayanth Sai Chikkala",
+    dossierRole: "Associate Software Engineer",
+    quickPromptsInput:
+      "🚀 Discuss a new project, 💼 Full-time job opportunity, ☕ Coffee & tech chat, ⚡ Backend / Spring Boot consultation",
+  });
+  const [savingContact, setSavingContact] = useState(false);
+  const [contactSaved, setContactSaved] = useState(false);
+  const [contactSaveError, setContactSaveError] = useState<string | null>(null);
+  const [uploadingContactAvatar, setUploadingContactAvatar] = useState(false);
+  const [uploadingContactResume, setUploadingContactResume] = useState(false);
+  const [contactUploadError, setContactUploadError] = useState<string | null>(null);
 
   // Project CMS State
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -647,6 +680,38 @@ export default function AdminPage() {
               terminalCtaUrl: contentData.content.about.terminalCtaUrl || "#contact",
             });
           }
+
+          if (contentData.content.contact) {
+            const c = contentData.content.contact;
+            setContactForm({
+              badgeText: c.badgeText || "GET IN TOUCH",
+              titleLine1: c.titleLine1 || "Let's Build Something",
+              titleLine2: c.titleLine2 || "Extraordinary",
+              description:
+                c.description ||
+                "Have an upcoming project, freelance inquiry, engineering role, or want to explore scalable architectures? Explore the interactive dossier on mobile or reach out directly.",
+              statusLabel: c.statusLabel || "CURRENT STATUS",
+              statusText: c.statusText || "Available for Full-time Roles & High-Impact Projects",
+              responseTime: c.responseTime || "Avg. response < 2h",
+              email: c.email || "chikkalajayanthsai@gmail.com",
+              phone: c.phone || "+91 9010253076",
+              location: c.location || "Hyderabad, India • Remote / Hybrid",
+              linkedinUrl: c.linkedinUrl || "https://www.linkedin.com/in/jayanth-sai-chikkala/",
+              githubUrl: c.githubUrl || "https://github.com/jayanthsaichikkala",
+              instagramUrl: c.instagramUrl || "https://www.instagram.com/",
+              whatsappMessage: c.whatsappMessage || "Hi Jayanth, I saw your portfolio!",
+              resumePdfUrl: c.resumePdfUrl || "",
+              resumePdfPublicId: c.resumePdfPublicId || "",
+              avatarUrl: c.avatarUrl || "/profile.png",
+              avatarPublicId: c.avatarPublicId || "",
+              dossierName: c.dossierName || "Jayanth Sai Chikkala",
+              dossierRole: c.dossierRole || "Associate Software Engineer",
+              quickPromptsInput:
+                c.quickPrompts && Array.isArray(c.quickPrompts)
+                  ? c.quickPrompts.join(", ")
+                  : "🚀 Discuss a new project, 💼 Full-time job opportunity, ☕ Coffee & tech chat, ⚡ Backend / Spring Boot consultation",
+            });
+          }
         }
       }
     } catch (err) {
@@ -998,6 +1063,161 @@ export default function AdminPage() {
     }
   };
 
+  const onContactAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingContactAvatar(true);
+    setContactUploadError(null);
+    try {
+      const res = await handleUploadFile(file, "portfolio/contact");
+      const updated = {
+        ...contactForm,
+        avatarUrl: res.url,
+        avatarPublicId: res.publicId,
+      };
+      setContactForm(updated);
+
+      const quickPrompts = updated.quickPromptsInput
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      // Auto-persist immediately to MongoDB
+      const saveRes = await fetch("/api/admin/content", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contact: {
+            ...updated,
+            quickPrompts,
+          },
+        }),
+      });
+
+      if (!saveRes.ok) {
+        const errJson = await saveRes.json().catch(() => ({}));
+        throw new Error(errJson.error || "Uploaded to Cloudinary but failed to save to database");
+      }
+
+      setContactSaved(true);
+      setTimeout(() => setContactSaved(false), 4500);
+      window.dispatchEvent(new Event("portfolio-content-updated"));
+    } catch (err: unknown) {
+      setContactUploadError(err instanceof Error ? err.message : "Failed to upload contact portrait to Cloudinary");
+    } finally {
+      setUploadingContactAvatar(false);
+    }
+  };
+
+  const onContactResumeFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".pdf") && file.type !== "application/pdf") {
+      setContactUploadError("Please select a valid PDF file for the resume.");
+      return;
+    }
+    setUploadingContactResume(true);
+    setContactUploadError(null);
+    try {
+      const res = await handleUploadFile(file, "portfolio/resumes");
+      const updated = {
+        ...contactForm,
+        resumePdfUrl: res.url,
+        resumePdfPublicId: res.publicId,
+      };
+      setContactForm(updated);
+
+      const quickPrompts = updated.quickPromptsInput
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      // Auto-persist immediately to MongoDB
+      const saveRes = await fetch("/api/admin/content", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contact: {
+            ...updated,
+            quickPrompts,
+          },
+        }),
+      });
+
+      if (!saveRes.ok) {
+        const errJson = await saveRes.json().catch(() => ({}));
+        throw new Error(errJson.error || "Uploaded resume to Cloudinary but failed to save to database");
+      }
+
+      setContactSaved(true);
+      setTimeout(() => setContactSaved(false), 4500);
+      window.dispatchEvent(new Event("portfolio-content-updated"));
+    } catch (err: unknown) {
+      setContactUploadError(err instanceof Error ? err.message : "Failed to upload contact resume PDF to Cloudinary");
+    } finally {
+      setUploadingContactResume(false);
+    }
+  };
+
+  const handleSaveContact = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSavingContact(true);
+    setContactSaveError(null);
+    setContactSaved(false);
+
+    try {
+      const quickPrompts = contactForm.quickPromptsInput
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      const payload = {
+        contact: {
+          badgeText: contactForm.badgeText,
+          titleLine1: contactForm.titleLine1,
+          titleLine2: contactForm.titleLine2,
+          description: contactForm.description,
+          statusLabel: contactForm.statusLabel,
+          statusText: contactForm.statusText,
+          responseTime: contactForm.responseTime,
+          email: contactForm.email,
+          phone: contactForm.phone,
+          location: contactForm.location,
+          linkedinUrl: contactForm.linkedinUrl,
+          githubUrl: contactForm.githubUrl,
+          instagramUrl: contactForm.instagramUrl,
+          whatsappMessage: contactForm.whatsappMessage,
+          resumePdfUrl: contactForm.resumePdfUrl,
+          resumePdfPublicId: contactForm.resumePdfPublicId,
+          avatarUrl: contactForm.avatarUrl,
+          avatarPublicId: contactForm.avatarPublicId,
+          dossierName: contactForm.dossierName,
+          dossierRole: contactForm.dossierRole,
+          quickPrompts,
+        },
+      };
+
+      const res = await fetch("/api/admin/content", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update Contact content");
+      }
+
+      setContactSaved(true);
+      setTimeout(() => setContactSaved(false), 4500);
+      window.dispatchEvent(new Event("portfolio-content-updated"));
+    } catch (err: unknown) {
+      setContactSaveError(err instanceof Error ? err.message : "Failed to save Contact content");
+    } finally {
+      setSavingContact(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen w-full bg-[var(--background)] text-[var(--foreground)] selection:bg-amber-500/20 selection:text-amber-600 dark:selection:text-amber-400 overflow-x-hidden flex flex-col justify-between">
       {/* Ambient background glow accents */}
@@ -1314,6 +1534,17 @@ export default function AdminPage() {
                 >
                   <Briefcase className="h-3.5 w-3.5" />
                   <span>Experience Timeline ({experienceList.length})</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("contact")}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeTab === "contact"
+                      ? "bg-amber-500 text-zinc-950 shadow-xs"
+                      : "text-[var(--muted-fg)] hover:text-[var(--foreground)] hover:bg-[var(--muted)]"
+                  }`}
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  <span>Contact Module CMS</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("messages")}
@@ -2738,6 +2969,609 @@ export default function AdminPage() {
                       ))}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Tab: Contact Module CMS */}
+              {activeTab === "contact" && (
+                <div className="space-y-6">
+                  {/* Status Alerts */}
+                  {contactSaved && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-3 shadow-xs"
+                    >
+                      <CheckCircle2 className="h-5 w-5 shrink-0" />
+                      <div>
+                        <p className="font-semibold">Contact Module Saved Successfully!</p>
+                        <p className="text-xs opacity-90">
+                          All contact details, social links, Cloudinary media assets, and status badges are synced live to MongoDB.
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {contactSaveError && (
+                    <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-3">
+                      <AlertCircle className="h-5 w-5 shrink-0" />
+                      <p>{contactSaveError}</p>
+                    </div>
+                  )}
+
+                  {contactUploadError && (
+                    <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-3">
+                      <AlertCircle className="h-5 w-5 shrink-0" />
+                      <p>{contactUploadError}</p>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSaveContact} className="space-y-6">
+                    {/* Top Action Bar */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] shadow-xs">
+                      <div>
+                        <h2 className="text-sm sm:text-base font-bold text-[var(--foreground)] flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-amber-500" />
+                          <span>Contact Module &amp; Dossier CMS</span>
+                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-normal">
+                            Live Sync
+                          </span>
+                        </h2>
+                        <p className="text-xs text-[var(--muted-fg)] mt-0.5">
+                          Configure section headers, status pill, direct channels, Cloudinary portrait cutout &amp; resume PDF, dossier tags, and discussion topics.
+                        </p>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        disabled={savingContact || uploadingContactAvatar || uploadingContactResume}
+                        className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-bold px-6 shadow-md hover:shadow-amber-500/25 active:scale-[0.98] transition-all cursor-pointer self-start sm:self-auto text-xs sm:text-sm"
+                      >
+                        {savingContact ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                            <span>Saving to MongoDB...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-4 w-4 mr-1.5" />
+                            <span>Save Contact Module</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Grid Section 1: Cloudinary Media Uploads (Portrait Cutout & Resume PDF) */}
+                    <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs space-y-5">
+                      <div className="flex items-center gap-2.5 border-b border-[var(--border)] pb-3.5">
+                        <div className="h-8 w-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                          <UploadCloud className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm sm:text-base font-bold text-[var(--foreground)]">
+                            Cloudinary Media Assets
+                          </h3>
+                          <p className="text-xs text-[var(--muted-fg)]">
+                            Upload your portrait cutout photo for the iPhone dossier and your official Resume PDF.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* 1. Contact Avatar Portrait */}
+                        <div className="p-4 rounded-2xl bg-[var(--muted)]/40 border border-[var(--border)] space-y-3">
+                          <Label className="text-xs font-semibold flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <ImageIcon className="h-3.5 w-3.5 text-amber-500" />
+                              <span>iPhone Dossier Portrait Photo</span>
+                            </span>
+                            <span className="text-[10px] text-[var(--muted-fg)]">Cloudinary: portfolio/contact</span>
+                          </Label>
+
+                          <div className="flex items-center gap-4">
+                            <div className="relative h-20 w-20 rounded-2xl overflow-hidden border border-amber-400/40 bg-gradient-to-tr from-[#3b335c] via-[#201c34] to-[#4c3f76] flex items-end justify-center shrink-0 shadow-sm">
+                              {contactForm.avatarUrl ? (
+                                <img
+                                  src={contactForm.avatarUrl}
+                                  alt="Portrait Preview"
+                                  className="h-full w-full object-contain object-bottom"
+                                />
+                              ) : (
+                                <UserCheck className="h-8 w-8 text-amber-400 opacity-60 mb-2" />
+                              )}
+                            </div>
+
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center gap-2">
+                                <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-semibold transition-colors">
+                                  <UploadCloud className="h-3.5 w-3.5" />
+                                  <span>{uploadingContactAvatar ? "Uploading to Cloudinary..." : "Upload New Photo"}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={onContactAvatarFileChange}
+                                    disabled={uploadingContactAvatar}
+                                    className="hidden"
+                                  />
+                                </label>
+                                {uploadingContactAvatar && (
+                                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-amber-500" />
+                                )}
+                              </div>
+
+                              <Input
+                                value={contactForm.avatarUrl}
+                                onChange={(e) =>
+                                  setContactForm((prev) => ({ ...prev, avatarUrl: e.target.value }))
+                                }
+                                placeholder="Or enter direct image URL"
+                                className="text-xs bg-[var(--background)] font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 2. Resume PDF Upload */}
+                        <div className="p-4 rounded-2xl bg-[var(--muted)]/40 border border-[var(--border)] space-y-3">
+                          <Label className="text-xs font-semibold flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                              <FileText className="h-3.5 w-3.5 text-amber-500" />
+                              <span>Official Resume PDF Document</span>
+                            </span>
+                            <span className="text-[10px] text-[var(--muted-fg)]">Cloudinary: portfolio/resumes</span>
+                          </Label>
+
+                          <div className="flex items-center gap-4">
+                            <div className="relative h-20 w-20 rounded-2xl overflow-hidden border border-[var(--border)] bg-amber-500/10 text-amber-600 dark:text-amber-400 flex flex-col items-center justify-center shrink-0 shadow-sm">
+                              {contactForm.resumePdfUrl ? (
+                                <>
+                                  <FileCheck className="h-7 w-7 text-emerald-500 mb-1" />
+                                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">PDF Ready</span>
+                                </>
+                              ) : (
+                                <>
+                                  <FileText className="h-7 w-7 opacity-60 mb-1" />
+                                  <span className="text-[9px] font-medium text-[var(--muted-fg)]">No PDF</span>
+                                </>
+                              )}
+                            </div>
+
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center gap-2">
+                                <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-semibold transition-colors">
+                                  <FileUp className="h-3.5 w-3.5" />
+                                  <span>{uploadingContactResume ? "Uploading PDF..." : "Upload Resume PDF"}</span>
+                                  <input
+                                    type="file"
+                                    accept=".pdf,application/pdf"
+                                    onChange={onContactResumeFileChange}
+                                    disabled={uploadingContactResume}
+                                    className="hidden"
+                                  />
+                                </label>
+                                {uploadingContactResume && (
+                                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-amber-500" />
+                                )}
+                                {contactForm.resumePdfUrl && (
+                                  <a
+                                    href={contactForm.resumePdfUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:underline"
+                                  >
+                                    <span>Preview</span>
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                              </div>
+
+                              <Input
+                                value={contactForm.resumePdfUrl}
+                                onChange={(e) =>
+                                  setContactForm((prev) => ({ ...prev, resumePdfUrl: e.target.value }))
+                                }
+                                placeholder="Or enter direct PDF URL"
+                                className="text-xs bg-[var(--background)] font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Grid Section 2: Section Header & Intro Texts */}
+                    <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs space-y-4">
+                      <div className="flex items-center gap-2.5 border-b border-[var(--border)] pb-3">
+                        <div className="h-8 w-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                          <Sparkles className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm sm:text-base font-bold text-[var(--foreground)]">
+                            Section Header &amp; Intro Badge
+                          </h3>
+                          <p className="text-xs text-[var(--muted-fg)]">
+                            Customize the main headline and introduction description of the contact section.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="contactBadge" className="text-xs font-semibold">
+                            Pill Badge Text
+                          </Label>
+                          <Input
+                            id="contactBadge"
+                            value={contactForm.badgeText}
+                            onChange={(e) =>
+                              setContactForm((prev) => ({ ...prev, badgeText: e.target.value }))
+                            }
+                            placeholder="GET IN TOUCH"
+                            className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="contactTitleLine1" className="text-xs font-semibold">
+                            Title (Line 1)
+                          </Label>
+                          <Input
+                            id="contactTitleLine1"
+                            value={contactForm.titleLine1}
+                            onChange={(e) =>
+                              setContactForm((prev) => ({ ...prev, titleLine1: e.target.value }))
+                            }
+                            placeholder="Let's Build Something"
+                            className="text-xs sm:text-sm bg-[var(--background)]"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="contactTitleLine2" className="text-xs font-semibold">
+                            Gradient Highlight (Line 2)
+                          </Label>
+                          <Input
+                            id="contactTitleLine2"
+                            value={contactForm.titleLine2}
+                            onChange={(e) =>
+                              setContactForm((prev) => ({ ...prev, titleLine2: e.target.value }))
+                            }
+                            placeholder="Extraordinary"
+                            className="text-xs sm:text-sm bg-[var(--background)] font-semibold text-amber-600 dark:text-amber-400"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="contactDesc" className="text-xs font-semibold">
+                          Description Paragraph
+                        </Label>
+                        <textarea
+                          id="contactDesc"
+                          rows={2}
+                          value={contactForm.description}
+                          onChange={(e) =>
+                            setContactForm((prev) => ({ ...prev, description: e.target.value }))
+                          }
+                          placeholder="Have an upcoming project, freelance inquiry, engineering role..."
+                          className="w-full rounded-xl border border-[var(--border)] bg-[var(--background)] p-3 text-xs sm:text-sm text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 focus-visible:border-amber-500 leading-relaxed resize-y"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Grid Section 3: Real-Time Availability & Status Banner */}
+                    <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs space-y-4">
+                      <div className="flex items-center gap-2.5 border-b border-[var(--border)] pb-3">
+                        <div className="h-8 w-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                          <CheckCircle2 className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm sm:text-base font-bold text-[var(--foreground)]">
+                            Live Availability Status Pill
+                          </h3>
+                          <p className="text-xs text-[var(--muted-fg)]">
+                            Control the real-time availability indicator shown on the top right card of the contact section.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="contactStatusLabel" className="text-xs font-semibold">
+                            Status Label
+                          </Label>
+                          <Input
+                            id="contactStatusLabel"
+                            value={contactForm.statusLabel}
+                            onChange={(e) =>
+                              setContactForm((prev) => ({ ...prev, statusLabel: e.target.value }))
+                            }
+                            placeholder="CURRENT STATUS"
+                            className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="contactStatusText" className="text-xs font-semibold">
+                            Availability Text
+                          </Label>
+                          <Input
+                            id="contactStatusText"
+                            value={contactForm.statusText}
+                            onChange={(e) =>
+                              setContactForm((prev) => ({ ...prev, statusText: e.target.value }))
+                            }
+                            placeholder="Available for Full-time Roles & High-Impact Projects"
+                            className="text-xs sm:text-sm bg-[var(--background)]"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="contactResponseTime" className="text-xs font-semibold">
+                            Avg Response Time
+                          </Label>
+                          <Input
+                            id="contactResponseTime"
+                            value={contactForm.responseTime}
+                            onChange={(e) =>
+                              setContactForm((prev) => ({ ...prev, responseTime: e.target.value }))
+                            }
+                            placeholder="Avg. response < 2h"
+                            className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Grid Section 4: Direct Channels & Dossier Settings */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Left: Direct Info Channels */}
+                      <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs space-y-4">
+                        <div className="flex items-center gap-2.5 border-b border-[var(--border)] pb-3">
+                          <div className="h-8 w-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                            <Mail className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm sm:text-base font-bold text-[var(--foreground)]">
+                              Direct Contact Channels
+                            </h3>
+                            <p className="text-xs text-[var(--muted-fg)]">
+                              Direct email, telephone/WhatsApp, and location information.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="contactEmail" className="text-xs font-semibold">
+                              Direct Email Address
+                            </Label>
+                            <Input
+                              id="contactEmail"
+                              type="email"
+                              value={contactForm.email}
+                              onChange={(e) =>
+                                setContactForm((prev) => ({ ...prev, email: e.target.value }))
+                              }
+                              placeholder="chikkalajayanthsai@gmail.com"
+                              className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="contactPhone" className="text-xs font-semibold">
+                              Phone / WhatsApp Number
+                            </Label>
+                            <Input
+                              id="contactPhone"
+                              value={contactForm.phone}
+                              onChange={(e) =>
+                                setContactForm((prev) => ({ ...prev, phone: e.target.value }))
+                              }
+                              placeholder="+91 9010253076"
+                              className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="contactLocation" className="text-xs font-semibold">
+                              Location &amp; Work Mode
+                            </Label>
+                            <Input
+                              id="contactLocation"
+                              value={contactForm.location}
+                              onChange={(e) =>
+                                setContactForm((prev) => ({ ...prev, location: e.target.value }))
+                              }
+                              placeholder="Hyderabad, India • Remote / Hybrid"
+                              className="text-xs sm:text-sm bg-[var(--background)]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: iPhone Dossier Info & Social Links */}
+                      <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs space-y-4">
+                        <div className="flex items-center gap-2.5 border-b border-[var(--border)] pb-3">
+                          <div className="h-8 w-8 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                            <Globe className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h3 className="text-sm sm:text-base font-bold text-[var(--foreground)]">
+                              Dossier &amp; Social Links
+                            </h3>
+                            <p className="text-xs text-[var(--muted-fg)]">
+                              iPhone Folder credentials and social network endpoints.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                              <Label htmlFor="dossierName" className="text-xs font-semibold">
+                                Dossier Full Name
+                              </Label>
+                              <Input
+                                id="dossierName"
+                                value={contactForm.dossierName}
+                                onChange={(e) =>
+                                  setContactForm((prev) => ({ ...prev, dossierName: e.target.value }))
+                                }
+                                placeholder="Jayanth Sai Chikkala"
+                                className="text-xs sm:text-sm bg-[var(--background)]"
+                              />
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <Label htmlFor="dossierRole" className="text-xs font-semibold">
+                                Dossier Role
+                              </Label>
+                              <Input
+                                id="dossierRole"
+                                value={contactForm.dossierRole}
+                                onChange={(e) =>
+                                  setContactForm((prev) => ({ ...prev, dossierRole: e.target.value }))
+                                }
+                                placeholder="Associate Software Engineer"
+                                className="text-xs sm:text-sm bg-[var(--background)]"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="contactLinkedIn" className="text-xs font-semibold">
+                              LinkedIn Profile URL
+                            </Label>
+                            <Input
+                              id="contactLinkedIn"
+                              value={contactForm.linkedinUrl}
+                              onChange={(e) =>
+                                setContactForm((prev) => ({ ...prev, linkedinUrl: e.target.value }))
+                              }
+                              placeholder="https://www.linkedin.com/in/jayanth-sai-chikkala/"
+                              className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="contactGitHub" className="text-xs font-semibold">
+                              GitHub Profile URL
+                            </Label>
+                            <Input
+                              id="contactGitHub"
+                              value={contactForm.githubUrl}
+                              onChange={(e) =>
+                                setContactForm((prev) => ({ ...prev, githubUrl: e.target.value }))
+                              }
+                              placeholder="https://github.com/jayanthsaichikkala"
+                              className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label htmlFor="contactWhatsAppMsg" className="text-xs font-semibold">
+                              WhatsApp Pre-filled Message
+                            </Label>
+                            <Input
+                              id="contactWhatsAppMsg"
+                              value={contactForm.whatsappMessage}
+                              onChange={(e) =>
+                                setContactForm((prev) => ({ ...prev, whatsappMessage: e.target.value }))
+                              }
+                              placeholder="Hi Jayanth, I saw your portfolio!"
+                              className="text-xs sm:text-sm bg-[var(--background)]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Grid Section 5: Quick Discussion Topics */}
+                    <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs space-y-4">
+                      <div className="flex items-center gap-2.5 border-b border-[var(--border)] pb-3">
+                        <div className="h-8 w-8 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                          <Sparkles className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm sm:text-base font-bold text-[var(--foreground)]">
+                            Quick Discussion Starters
+                          </h3>
+                          <p className="text-xs text-[var(--muted-fg)]">
+                            Interactive quick tags that open pre-filled inquiry emails with custom topics.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="quickPromptsInput" className="text-xs font-semibold flex items-center justify-between">
+                          <span>Topics (Comma-separated)</span>
+                          <span className="text-[11px] text-[var(--muted-fg)] font-normal">e.g. 🚀 Discuss a new project, 💼 Full-time role</span>
+                        </Label>
+                        <Input
+                          id="quickPromptsInput"
+                          value={contactForm.quickPromptsInput}
+                          onChange={(e) =>
+                            setContactForm((prev) => ({ ...prev, quickPromptsInput: e.target.value }))
+                          }
+                          placeholder="🚀 Discuss a new project, 💼 Full-time job opportunity, ☕ Coffee & tech chat"
+                          className="text-xs sm:text-sm bg-[var(--background)] font-mono"
+                        />
+                      </div>
+
+                      {/* Live Chips Preview */}
+                      <div className="p-3.5 rounded-xl bg-[var(--muted)]/40 border border-[var(--border)]/60 space-y-2">
+                        <span className="text-[11px] font-semibold text-[var(--muted-fg)] uppercase tracking-wider">
+                          Live Topics Preview:
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {contactForm.quickPromptsInput
+                            .split(",")
+                            .map((p) => p.trim())
+                            .filter(Boolean)
+                            .map((prompt, idx) => (
+                              <span
+                                key={idx}
+                                className="px-3 py-1.5 rounded-xl text-xs font-medium bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300"
+                              >
+                                {prompt}
+                              </span>
+                            ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Save Bar */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-[var(--card-bg)] border border-[var(--border)] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 text-xs text-[var(--muted-fg)]">
+                        <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                          <Check className="h-4.5 w-4.5" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm text-[var(--foreground)]">Save Contact Module Changes</p>
+                          <p className="text-[11px]">All contact parameters, Cloudinary media, and discussion chips will be persisted to MongoDB.</p>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="submit"
+                        disabled={savingContact || uploadingContactAvatar || uploadingContactResume}
+                        className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-zinc-950 font-bold px-8 py-3 shadow-md hover:shadow-amber-500/25 active:scale-[0.98] transition-all cursor-pointer text-sm shrink-0"
+                      >
+                        {savingContact ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                            <span>Saving Changes to MongoDB...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="h-4 w-4 mr-1.5" />
+                            <span>Save Contact Module Details</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </form>
                 </div>
               )}
 

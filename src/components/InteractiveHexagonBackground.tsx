@@ -130,10 +130,10 @@ export default function InteractiveHexagonBackground({
       }
     };
 
-    const interactionRadius = 160;
-    const maxDisplacement = 2.5;
-    const springSpeed = 0.15;
-    const damping = 0.78;
+    const interactionRadius = 120;
+    const maxDisplacement = 2;
+    const springSpeed = 0.12;
+    const damping = 0.82;
 
     const traceHexagon = (cx: number, cy: number, r: number) => {
       if (!ctx) return;
@@ -173,7 +173,7 @@ export default function InteractiveHexagonBackground({
 
     const handleResize = () => {
       if (!canvas) return;
-      dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      dpr = 1;
       width = canvas.parentElement?.clientWidth || window.innerWidth;
       height = canvas.parentElement?.clientHeight || window.innerHeight;
       canvas.width = Math.floor(width * dpr);
@@ -279,7 +279,7 @@ export default function InteractiveHexagonBackground({
         ctx.restore();
       }
 
-      if (!prefersReducedMotion && isVisible && (maxActivity > 0.005 || mouse.isInside)) {
+      if (!prefersReducedMotion && isVisible && (maxActivity > 0.02 || mouse.isInside)) {
         animationFrameId = requestAnimationFrame(render);
       } else {
         isAnimating = false;

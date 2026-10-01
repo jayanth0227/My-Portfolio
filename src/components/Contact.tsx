@@ -19,6 +19,7 @@ import {
 import { Iphone } from "@/registry/magicui/iphone";
 import { Folder } from "@/components/ui/Folder";
 import { usePortfolioContent } from "@/context/PortfolioContentContext";
+import { DEFAULT_PORTFOLIO_CONTENT } from "@/lib/contentDefaults";
 import { cn } from "@/lib/utils";
 
 import Dock, { type DockItem } from "@/components/smoothui/components/dock";
@@ -65,18 +66,25 @@ const QUICK_PROMPTS = [
 
 export default function Contact() {
   const { content } = usePortfolioContent();
+  const contact = content.contact || DEFAULT_PORTFOLIO_CONTENT.contact;
   const hero = content.hero;
   const about = content.about;
   const navbar = content.navbar;
 
-  const fullName = about.fullName || "Jayanth Sai Chikkala";
-  const emailAddress = "chikkalajayanthsai@gmail.com";
-  const phoneNumber = about.mobile || "+91 9010253076";
+  const fullName = contact.dossierName || about.fullName || "Jayanth Sai Chikkala";
+  const designation = contact.dossierRole || about.designation || "Associate Software Engineer";
+  const emailAddress = contact.email || "chikkalajayanthsai@gmail.com";
+  const phoneNumber = contact.phone || about.mobile || "+91 9010253076";
+  const locationText = contact.location || "Hyderabad, India • Remote / Hybrid";
   const cleanPhone = phoneNumber.replace(/[^0-9+]/g, "");
   const linkedinUrl =
-    about.linkedinUrl || "https://www.linkedin.com/in/jayanth-sai-chikkala/";
-  const githubUrl = "https://github.com/jayanthsaichikkala";
-  const heroAvatar = hero.avatarUrl || "/profile.png";
+    contact.linkedinUrl || about.linkedinUrl || "https://www.linkedin.com/in/jayanth-sai-chikkala/";
+  const githubUrl = contact.githubUrl || "https://github.com/jayanthsaichikkala";
+  const instagramUrl = contact.instagramUrl || "https://www.instagram.com/";
+  const whatsappMessage = contact.whatsappMessage || "Hi Jayanth, I saw your portfolio!";
+  const resumeUrl = contact.resumePdfUrl || hero.resumePdfUrl || "/api/resume";
+  const contactAvatar = contact.avatarUrl || hero.avatarUrl || "/profile.png";
+  const quickPrompts = contact.quickPrompts && contact.quickPrompts.length > 0 ? contact.quickPrompts : QUICK_PROMPTS;
 
   // Copied states for buttons
   const [copiedEmail, setCopiedEmail] = useState(false);
@@ -100,7 +108,7 @@ export default function Contact() {
       id: "whatsapp",
       label: "WhatsApp",
       icon: <WhatsAppAppIcon />,
-      href: `https://wa.me/${cleanPhone.replace("+", "")}?text=${encodeURIComponent("Hi Jayanth, I saw your portfolio!")}`,
+      href: `https://wa.me/${cleanPhone.replace("+", "")}?text=${encodeURIComponent(whatsappMessage)}`,
       target: "_blank",
       active: true,
     },
@@ -123,7 +131,7 @@ export default function Contact() {
       id: "instagram",
       label: "Instagram",
       icon: <InstagramAppIcon />,
-      href: "https://www.instagram.com/",
+      href: instagramUrl,
       target: "_blank",
       active: false,
     },
@@ -132,7 +140,7 @@ export default function Contact() {
   return (
     <section
       id="contact"
-      className="relative w-full overflow-hidden bg-[var(--background)] py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 selection:bg-amber-500/20 selection:text-amber-600 dark:selection:text-amber-400"
+      className="relative z-10 w-full pt-6 pb-16 sm:pt-8 sm:pb-20 lg:pt-10 lg:pb-24 px-4 sm:px-6 lg:px-8"
     >
       {/* Background Ambient Glow Orbs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden select-none">
@@ -155,7 +163,7 @@ export default function Contact() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
             </span>
-            <span>GET IN TOUCH</span>
+            <span>{contact.badgeText || "GET IN TOUCH"}</span>
           </motion.div>
 
           <motion.h2
@@ -165,9 +173,9 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[var(--foreground)]"
           >
-            Let&apos;s Build Something{" "}
+            {(contact.titleLine1 || "Let's Build Something")}{" "}
             <span className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 dark:from-amber-400 dark:via-yellow-400 dark:to-amber-500 bg-clip-text text-transparent">
-              Extraordinary
+              {contact.titleLine2 || "Extraordinary"}
             </span>
           </motion.h2>
 
@@ -178,7 +186,8 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-3 text-sm sm:text-base text-[var(--muted-fg)] leading-relaxed max-w-2xl mx-auto"
           >
-            Have an upcoming project, freelance inquiry, engineering role, or want to explore scalable architectures? Explore the interactive dossier on mobile or reach out directly.
+            {contact.description ||
+              "Have an upcoming project, freelance inquiry, engineering role, or want to explore scalable architectures? Explore the interactive dossier on mobile or reach out directly."}
           </motion.p>
         </div>
 
@@ -246,7 +255,7 @@ export default function Contact() {
                         viewBox="0 0 160 160"
                         className="absolute inset-0 w-full h-full pointer-events-none"
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+                        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
                       >
                         <defs>
                           <linearGradient id="ovalGradientContact" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -265,21 +274,7 @@ export default function Contact() {
                         />
                       </motion.svg>
 
-                      {/* Counter-Rotating Subtle Outer Ring */}
-                      <motion.svg
-                        viewBox="0 0 160 160"
-                        className="absolute -inset-1.5 w-[calc(100%+12px)] h-[calc(100%+12px)] pointer-events-none opacity-40 blur-[0.5px]"
-                        animate={{ rotate: -360 }}
-                        transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
-                      >
-                        <path
-                          d="M 80,12 C 126,14 150,38 146,82 C 142,126 110,148 72,146 C 34,144 10,116 14,70 C 18,24 34,10 80,12 Z"
-                          fill="none"
-                          stroke="#eab308"
-                          strokeWidth="1.2"
-                          strokeDasharray="4 6"
-                        />
-                      </motion.svg>
+                      {/* Counter-rotating ring removed for performance */}
 
                       {/* Organic Oval Cutout Container for Portrait */}
                       <motion.div
@@ -292,14 +287,14 @@ export default function Contact() {
                           ],
                         }}
                         transition={{
-                          duration: 8,
+                          duration: 12,
                           repeat: Infinity,
                           ease: "easeInOut",
                         }}
                         className="relative overflow-hidden w-[80px] h-[80px] sm:w-[86px] sm:h-[86px] flex items-end justify-center bg-gradient-to-tr from-[#3b335c] via-[#201c34] to-[#4c3f76] border border-amber-400/40 shadow-lg"
                       >
                         <Image
-                          src={heroAvatar}
+                          src={contactAvatar}
                           alt="Portrait"
                           width={180}
                           height={180}
@@ -355,7 +350,7 @@ export default function Contact() {
                           // Paper 3: Resume / Profile Card
                           <a
                             key="profile"
-                            href="/api/resume"
+                            href={resumeUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="h-full w-full p-1.5 flex flex-col justify-between text-left text-zinc-900 font-sans block select-none"
@@ -368,7 +363,7 @@ export default function Contact() {
                             </div>
                             <div className="leading-tight">
                               <p className="text-[7px] font-black text-zinc-900 truncate">{fullName}</p>
-                              <p className="text-[5.5px] text-zinc-600 truncate">Software Engineer</p>
+                              <p className="text-[5.5px] text-zinc-600 truncate">{designation}</p>
                             </div>
                           </a>,
                         ]}
@@ -416,28 +411,28 @@ export default function Contact() {
             className="lg:col-span-7 flex flex-col gap-5 order-2"
           >
             {/* Quick Status Pill */}
-            <div className="flex flex-wrap items-center gap-3 p-4 rounded-2xl bg-[var(--card-bg)]/80 dark:bg-zinc-900/60 backdrop-blur-xl border border-[var(--border)] dark:border-zinc-800/80 shadow-md">
+            <div className="flex flex-wrap items-center gap-3 p-4 rounded-2xl bg-[var(--card-bg)]/80 dark:bg-zinc-900/60 backdrop-blur-sm border border-[var(--border)] dark:border-zinc-800/80 shadow-md">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                 <Sparkles className="h-5 w-5 animate-pulse" />
               </div>
               <div className="flex-1 min-w-[200px]">
                 <p className="text-xs font-semibold text-emerald-500 uppercase tracking-wider">
-                  Current Status
+                  {contact.statusLabel || "Current Status"}
                 </p>
                 <p className="text-sm font-medium text-[var(--foreground)]">
-                  Available for Full-time Roles &amp; High-Impact Projects
+                  {contact.statusText || "Available for Full-time Roles & High-Impact Projects"}
                 </p>
               </div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--muted)] text-[11px] font-medium text-[var(--muted-fg)]">
                 <Clock className="h-3.5 w-3.5 text-amber-500" />
-                <span>Avg. response &lt; 2h</span>
+                <span>{contact.responseTime || "Avg. response < 2h"}</span>
               </div>
             </div>
 
             {/* Direct Contact Action Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Email Card */}
-              <div className="group relative overflow-hidden rounded-2xl p-5 bg-[var(--card-bg)]/90 dark:bg-zinc-900/70 backdrop-blur-xl border border-[var(--border)] dark:border-zinc-800/80 hover:border-amber-500/50 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-amber-500/10">
+              <div className="group relative overflow-hidden rounded-2xl p-5 bg-[var(--card-bg)]/90 dark:bg-zinc-900/70 backdrop-blur-sm border border-[var(--border)] dark:border-zinc-800/80 hover:border-amber-500/50 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-amber-500/10">
                 <div className="flex items-start justify-between">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/20 group-hover:scale-110 transition-transform">
                     <Mail className="h-5 w-5" />
@@ -480,7 +475,7 @@ export default function Contact() {
               </div>
 
               {/* Phone / WhatsApp Card */}
-              <div className="group relative overflow-hidden rounded-2xl p-5 bg-[var(--card-bg)]/90 dark:bg-zinc-900/70 backdrop-blur-xl border border-[var(--border)] dark:border-zinc-800/80 hover:border-amber-500/50 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-amber-500/10">
+              <div className="group relative overflow-hidden rounded-2xl p-5 bg-[var(--card-bg)]/90 dark:bg-zinc-900/70 backdrop-blur-sm border border-[var(--border)] dark:border-zinc-800/80 hover:border-amber-500/50 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-amber-500/10">
                 <div className="flex items-start justify-between">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 group-hover:scale-110 transition-transform">
                     <Phone className="h-5 w-5" />
@@ -523,7 +518,7 @@ export default function Contact() {
                   </a>
                   <span className="text-zinc-400">•</span>
                   <a
-                    href={`https://wa.me/${cleanPhone.replace("+", "")}?text=Hi%20Jayanth,%20I%20saw%20your%20portfolio!`}
+                    href={`https://wa.me/${cleanPhone.replace("+", "")}?text=${encodeURIComponent(whatsappMessage)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
@@ -536,7 +531,7 @@ export default function Contact() {
             </div>
 
             {/* Location & Social Connections Box */}
-            <div className="rounded-2xl p-6 bg-[var(--card-bg)]/90 dark:bg-zinc-900/70 backdrop-blur-xl border border-[var(--border)] dark:border-zinc-800/80 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="rounded-2xl p-6 bg-[var(--card-bg)]/90 dark:bg-zinc-900/70 backdrop-blur-sm border border-[var(--border)] dark:border-zinc-800/80 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 border border-blue-500/20">
                   <MapPin className="h-5 w-5" />
@@ -544,7 +539,7 @@ export default function Contact() {
                 <div>
                   <p className="text-xs font-medium text-[var(--muted-fg)]">Location &amp; Work Mode</p>
                   <p className="text-sm font-semibold text-[var(--foreground)]">
-                    Hyderabad, India • Remote / Hybrid
+                    {locationText}
                   </p>
                 </div>
               </div>
@@ -570,7 +565,7 @@ export default function Contact() {
                   <GitHubIcon className="h-4.5 w-4.5" />
                 </a>
                 <a
-                  href="/api/resume"
+                  href={resumeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3.5 h-10 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-semibold transition-all duration-200 hover:scale-105"
@@ -582,21 +577,22 @@ export default function Contact() {
             </div>
 
             {/* Quick Discussion Starters */}
-            <div className="rounded-2xl p-5 bg-[var(--card-bg)]/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-[var(--border)] dark:border-zinc-800/80">
+            <div className="rounded-2xl p-5 bg-[var(--card-bg)]/80 dark:bg-zinc-900/50 backdrop-blur-sm border border-[var(--border)] dark:border-zinc-800/80">
               <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-fg)] mb-2.5 flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                 <span>Quick Discussion Topics</span>
               </p>
               <div className="flex flex-wrap gap-2">
-                {QUICK_PROMPTS.map((prompt, idx) => (
+                {quickPrompts.map((prompt, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => {
                       setSelectedPrompt(prompt);
+                      const firstName = fullName.split(" ")[0] || "Jayanth";
                       const mailtoUrl = `mailto:${emailAddress}?subject=${encodeURIComponent(
                         prompt.replace(/^[^\s]+\s/, "")
-                      )}&body=${encodeURIComponent("Hi Jayanth,\n\nI would like to discuss " + prompt)}`;
+                      )}&body=${encodeURIComponent("Hi " + firstName + ",\n\nI would like to discuss " + prompt)}`;
                       window.location.href = mailtoUrl;
                     }}
                     className={cn(
@@ -613,32 +609,6 @@ export default function Contact() {
             </div>
           </motion.div>
         </div>
-
-        {/* ── Footer ── */}
-        <footer className="mt-20 pt-8 border-t border-[var(--border)] dark:border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-[var(--muted-fg)]">
-          <div className="flex items-center gap-2">
-            <span className="font-signature text-xl font-bold text-amber-500 dark:text-amber-400">
-              {navbar.brandName || "Jayanth Sai Chikkala"}
-            </span>
-            <span className="text-zinc-400">•</span>
-            <span>Full Stack Developer</span>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <a href="#home" className="hover:text-amber-500 transition-colors">Home</a>
-            <a href="#about" className="hover:text-amber-500 transition-colors">About</a>
-            <a href="#skills" className="hover:text-amber-500 transition-colors">Skills</a>
-            <a href="#projects" className="hover:text-amber-500 transition-colors">Projects</a>
-            <a href="#experience" className="hover:text-amber-500 transition-colors">Experience</a>
-            <a href="#contact" className="hover:text-amber-500 transition-colors">Contact</a>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <span>Crafted with</span>
-            <Heart className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-            <span>&amp; Precision</span>
-          </div>
-        </footer>
       </div>
     </section>
   );

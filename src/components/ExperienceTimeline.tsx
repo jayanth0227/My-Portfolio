@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import {
   motion,
   useScroll,
   useTransform,
   useSpring,
-  useMotionValue,
 } from "framer-motion";
 import {
   Briefcase,
@@ -58,36 +57,9 @@ function TimelineCard({
     [0.2, 0.5, 0.8],
     [0.85, 1.15, 0.9]
   );
-  const smoothNodeScale = useSpring(nodeScale, { stiffness: 400, damping: 30 });
+  const smoothNodeScale = useSpring(nodeScale, { stiffness: 300, damping: 30 });
 
-  // 3D Mouse Parallax Hover Effect
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [7, -7]), {
-    stiffness: 350,
-    damping: 25,
-  });
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-7, 7]), {
-    stiffness: 350,
-    damping: 25,
-  });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    mouseX.set(x);
-    mouseY.set(y);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    mouseX.set(0);
-    mouseY.set(0);
-  };
+  // 3D tilt removed for performance — using simple hover instead
 
   // Parse description bullet points or line breaks
   const descriptionBullets = item.description
@@ -110,12 +82,11 @@ function TimelineCard({
         className="absolute left-4 sm:left-1/2 -translate-x-1/2 top-1.5 sm:top-8 z-20 flex items-center justify-center pointer-events-none"
       >
         <div className="relative flex items-center justify-center">
-          {/* Ambient outer pulse halo */}
-          <div className="absolute h-9 w-9 sm:h-11 sm:w-11 rounded-full bg-amber-500/25 dark:bg-amber-400/20 animate-ping opacity-60" />
+          {/* Ambient outer glow (static, no ping animation) */}
           <div className="absolute h-12 w-12 rounded-full bg-amber-500/10 dark:bg-amber-400/10 blur-md" />
 
           {/* Core Node Button */}
-          <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-[var(--card-bg)] border-2 border-amber-500 dark:border-amber-400 shadow-[0_0_18px_rgba(245,158,11,0.5)] flex items-center justify-center text-amber-500 dark:text-amber-400 transition-transform duration-300">
+          <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-[var(--card-bg)] border-2 border-amber-500 dark:border-amber-400 shadow-md flex items-center justify-center text-amber-500 dark:text-amber-400">
             <Briefcase className="h-4 w-4" />
           </div>
         </div>
@@ -126,28 +97,11 @@ function TimelineCard({
         style={{ y: smoothCardY, opacity: cardOpacity }}
         className={`w-full sm:w-[calc(50%-2.25rem)] pl-12 sm:pl-0 ${
           isEven ? "sm:pl-10" : "sm:pr-10"
-        } perspective-1000`}
+        }`}
       >
-        <motion.div
-          onMouseMove={handleMouseMove}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={handleMouseLeave}
-          style={{
-            rotateX: isHovered ? rotateX : 0,
-            rotateY: isHovered ? rotateY : 0,
-            transformStyle: "preserve-3d",
-          }}
-          className="timeline-interactive-card rounded-2xl sm:rounded-3xl border border-amber-400/35 dark:border-amber-500/25 bg-[var(--card-bg)]/95 backdrop-blur-md p-5 sm:p-7 shadow-lg shadow-amber-500/5 hover:shadow-2xl hover:shadow-amber-500/15 hover:border-amber-400/60 dark:hover:border-amber-400/40 transition-all duration-300 relative overflow-hidden group/card cursor-default"
+        <div
+          className="timeline-interactive-card rounded-2xl sm:rounded-3xl border border-amber-400/35 dark:border-amber-500/25 bg-[var(--card-bg)]/95 backdrop-blur-sm p-5 sm:p-7 shadow-lg shadow-amber-500/5 hover:shadow-xl hover:border-amber-400/60 dark:hover:border-amber-400/40 transition-all duration-300 relative overflow-hidden group/card cursor-default"
         >
-          {/* Dynamic Radial Spotlight on Mouse Move */}
-          {isHovered && (
-            <motion.div
-              className="pointer-events-none absolute -inset-px rounded-3xl opacity-100 transition-opacity duration-300"
-              style={{
-                background: `radial-gradient(400px circle at ${(mouseX.get() + 0.5) * 100}% ${(mouseY.get() + 0.5) * 100}%, rgba(245, 158, 11, 0.12), transparent 70%)`,
-              }}
-            />
-          )}
 
           {/* Terminal Header Bar with Window Controls */}
           <div className="flex items-center justify-between border-b border-[var(--border)] dark:border-zinc-800/80 pb-3.5 mb-4 relative z-10">
@@ -210,8 +164,8 @@ function TimelineCard({
           </div>
 
           {/* Card Glow Corner Accent */}
-          <div className="absolute -bottom-10 -right-10 w-28 h-28 bg-amber-500/5 rounded-full blur-2xl pointer-events-none group-hover/card:bg-amber-500/15 transition-colors" />
-        </motion.div>
+          <div className="absolute -bottom-10 -right-10 w-28 h-28 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+        </div>
       </motion.div>
     </div>
   );

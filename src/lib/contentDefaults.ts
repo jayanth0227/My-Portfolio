@@ -9,6 +9,30 @@ export interface ExperienceItem {
   order?: number;
 }
 
+export interface ContactData {
+  badgeText: string;
+  titleLine1: string;
+  titleLine2: string;
+  description: string;
+  statusLabel: string;
+  statusText: string;
+  responseTime: string;
+  email: string;
+  phone: string;
+  location: string;
+  linkedinUrl: string;
+  githubUrl: string;
+  instagramUrl?: string;
+  whatsappMessage?: string;
+  resumePdfUrl?: string;
+  resumePdfPublicId?: string;
+  avatarUrl?: string;
+  avatarPublicId?: string;
+  dossierName?: string;
+  dossierRole?: string;
+  quickPrompts?: string[];
+}
+
 export interface PortfolioContentData {
   navbar: {
     brandName: string;
@@ -56,6 +80,7 @@ export interface PortfolioContentData {
     terminalCtaUrl?: string;
   };
   experience: ExperienceItem[];
+  contact: ContactData;
 }
 
 export const DEFAULT_PORTFOLIO_CONTENT: PortfolioContentData = {
@@ -165,5 +190,33 @@ export const DEFAULT_PORTFOLIO_CONTENT: PortfolioContentData = {
       order: 3,
     },
   ],
+  contact: {
+    badgeText: "GET IN TOUCH",
+    titleLine1: "Let's Build Something",
+    titleLine2: "Extraordinary",
+    description:
+      "Have an upcoming project, freelance inquiry, engineering role, or want to explore scalable architectures? Explore the interactive dossier on mobile or reach out directly.",
+    statusLabel: "CURRENT STATUS",
+    statusText: "Available for Full-time Roles & High-Impact Projects",
+    responseTime: "Avg. response < 2h",
+    email: "chikkalajayanthsai@gmail.com",
+    phone: "+91 9010253076",
+    location: "Hyderabad, India • Remote / Hybrid",
+    linkedinUrl: "https://www.linkedin.com/in/jayanth-sai-chikkala/",
+    githubUrl: "https://github.com/jayanthsaichikkala",
+    instagramUrl: "https://www.instagram.com/",
+    whatsappMessage: "Hi Jayanth, I saw your portfolio!",
+    resumePdfUrl: "",
+    resumePdfPublicId: "",
+    avatarUrl: "/profile.png",
+    avatarPublicId: "",
+    dossierName: "Jayanth Sai Chikkala",
+    dossierRole: "Associate Software Engineer",
+    quickPrompts: [
+      "🚀 Discuss a new project",
+      "💼 Full-time job opportunity",
+      "☕ Coffee & tech chat",
+      "⚡ Backend / Spring Boot consultation",
+    ],
+  },
 };
-

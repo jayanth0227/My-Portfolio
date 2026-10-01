@@ -74,6 +74,31 @@ export async function GET() {
             Array.isArray(content.experience)
               ? content.experience
               : DEFAULT_PORTFOLIO_CONTENT.experience,
+          contact: {
+            badgeText: content.contact?.badgeText || DEFAULT_PORTFOLIO_CONTENT.contact.badgeText,
+            titleLine1: content.contact?.titleLine1 || DEFAULT_PORTFOLIO_CONTENT.contact.titleLine1,
+            titleLine2: content.contact?.titleLine2 || DEFAULT_PORTFOLIO_CONTENT.contact.titleLine2,
+            description: content.contact?.description || DEFAULT_PORTFOLIO_CONTENT.contact.description,
+            statusLabel: content.contact?.statusLabel || DEFAULT_PORTFOLIO_CONTENT.contact.statusLabel,
+            statusText: content.contact?.statusText || DEFAULT_PORTFOLIO_CONTENT.contact.statusText,
+            responseTime: content.contact?.responseTime || DEFAULT_PORTFOLIO_CONTENT.contact.responseTime,
+            email: content.contact?.email || DEFAULT_PORTFOLIO_CONTENT.contact.email,
+            phone: content.contact?.phone || DEFAULT_PORTFOLIO_CONTENT.contact.phone,
+            location: content.contact?.location || DEFAULT_PORTFOLIO_CONTENT.contact.location,
+            linkedinUrl: content.contact?.linkedinUrl || DEFAULT_PORTFOLIO_CONTENT.contact.linkedinUrl,
+            githubUrl: content.contact?.githubUrl || DEFAULT_PORTFOLIO_CONTENT.contact.githubUrl,
+            instagramUrl: content.contact?.instagramUrl || DEFAULT_PORTFOLIO_CONTENT.contact.instagramUrl,
+            whatsappMessage: content.contact?.whatsappMessage || DEFAULT_PORTFOLIO_CONTENT.contact.whatsappMessage,
+            resumePdfUrl: content.contact?.resumePdfUrl || "",
+            resumePdfPublicId: content.contact?.resumePdfPublicId || "",
+            avatarUrl: content.contact?.avatarUrl || DEFAULT_PORTFOLIO_CONTENT.contact.avatarUrl,
+            avatarPublicId: content.contact?.avatarPublicId || "",
+            dossierName: content.contact?.dossierName || DEFAULT_PORTFOLIO_CONTENT.contact.dossierName,
+            dossierRole: content.contact?.dossierRole || DEFAULT_PORTFOLIO_CONTENT.contact.dossierRole,
+            quickPrompts: Array.isArray(content.contact?.quickPrompts)
+              ? content.contact.quickPrompts
+              : DEFAULT_PORTFOLIO_CONTENT.contact.quickPrompts,
+          },
         },
         source: "database",
       },

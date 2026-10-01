@@ -124,8 +124,8 @@ export default function InteractiveGridBackground({
       }
     };
 
-    const springSpeed = 0.15;
-    const damping = 0.78;
+    const springSpeed = 0.12;
+    const damping = 0.82;
 
     const handleMouseMove = (e: MouseEvent) => {
       const cx = e.clientX - rect.left;
@@ -148,7 +148,7 @@ export default function InteractiveGridBackground({
 
     const handleResize = () => {
       if (!canvas) return;
-      dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+      dpr = 1;
       const parent = canvas.parentElement;
       canvasW = parent ? parent.clientWidth : window.innerWidth;
       canvasH = parent ? parent.clientHeight : window.innerHeight;
@@ -244,20 +244,8 @@ export default function InteractiveGridBackground({
       for (let c = 0; c < cols; c++) for (let r = 0; r < rows - 1; r++) { const f = grid[c][r], t = grid[c][r + 1]; ctx.moveTo(f.x, f.y); ctx.lineTo(t.x, t.y); }
       ctx.stroke(); ctx.restore();
 
-      // Particles
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r < rows; r++) {
-          const node = grid[c][r];
-          if (node.activation > 0.03) {
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, 1.4 + node.activation * 1.8, 0, Math.PI * 2);
-            ctx.fillStyle = colors.particle(node.activation);
-            ctx.fill();
-          }
-        }
-      }
 
-      if (!prefersReducedMotion && isVisible && (maxActivity > 0.005 || mouse.isInside)) {
+      if (!prefersReducedMotion && isVisible && (maxActivity > 0.02 || mouse.isInside)) {
         animationFrameId = requestAnimationFrame(render);
       } else { isAnimating = false; animationFrameId = 0; }
     }

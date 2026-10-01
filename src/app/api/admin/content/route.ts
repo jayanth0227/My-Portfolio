@@ -120,6 +120,34 @@ export async function PUT(request: Request) {
       };
     }
 
+    if (body.contact !== undefined) {
+      updatePayload.contact = {
+        badgeText: body.contact?.badgeText !== undefined ? body.contact.badgeText.trim() : (existing?.contact?.badgeText ?? DEFAULT_PORTFOLIO_CONTENT.contact.badgeText),
+        titleLine1: body.contact?.titleLine1 !== undefined ? body.contact.titleLine1.trim() : (existing?.contact?.titleLine1 ?? DEFAULT_PORTFOLIO_CONTENT.contact.titleLine1),
+        titleLine2: body.contact?.titleLine2 !== undefined ? body.contact.titleLine2.trim() : (existing?.contact?.titleLine2 ?? DEFAULT_PORTFOLIO_CONTENT.contact.titleLine2),
+        description: body.contact?.description !== undefined ? body.contact.description.trim() : (existing?.contact?.description ?? DEFAULT_PORTFOLIO_CONTENT.contact.description),
+        statusLabel: body.contact?.statusLabel !== undefined ? body.contact.statusLabel.trim() : (existing?.contact?.statusLabel ?? DEFAULT_PORTFOLIO_CONTENT.contact.statusLabel),
+        statusText: body.contact?.statusText !== undefined ? body.contact.statusText.trim() : (existing?.contact?.statusText ?? DEFAULT_PORTFOLIO_CONTENT.contact.statusText),
+        responseTime: body.contact?.responseTime !== undefined ? body.contact.responseTime.trim() : (existing?.contact?.responseTime ?? DEFAULT_PORTFOLIO_CONTENT.contact.responseTime),
+        email: body.contact?.email !== undefined ? body.contact.email.trim() : (existing?.contact?.email ?? DEFAULT_PORTFOLIO_CONTENT.contact.email),
+        phone: body.contact?.phone !== undefined ? body.contact.phone.trim() : (existing?.contact?.phone ?? DEFAULT_PORTFOLIO_CONTENT.contact.phone),
+        location: body.contact?.location !== undefined ? body.contact.location.trim() : (existing?.contact?.location ?? DEFAULT_PORTFOLIO_CONTENT.contact.location),
+        linkedinUrl: body.contact?.linkedinUrl !== undefined ? body.contact.linkedinUrl.trim() : (existing?.contact?.linkedinUrl ?? DEFAULT_PORTFOLIO_CONTENT.contact.linkedinUrl),
+        githubUrl: body.contact?.githubUrl !== undefined ? body.contact.githubUrl.trim() : (existing?.contact?.githubUrl ?? DEFAULT_PORTFOLIO_CONTENT.contact.githubUrl),
+        instagramUrl: body.contact?.instagramUrl !== undefined ? body.contact.instagramUrl.trim() : (existing?.contact?.instagramUrl ?? DEFAULT_PORTFOLIO_CONTENT.contact.instagramUrl),
+        whatsappMessage: body.contact?.whatsappMessage !== undefined ? body.contact.whatsappMessage.trim() : (existing?.contact?.whatsappMessage ?? DEFAULT_PORTFOLIO_CONTENT.contact.whatsappMessage),
+        resumePdfUrl: body.contact?.resumePdfUrl !== undefined ? body.contact.resumePdfUrl.trim() : (existing?.contact?.resumePdfUrl ?? ""),
+        resumePdfPublicId: body.contact?.resumePdfPublicId !== undefined ? body.contact.resumePdfPublicId : (existing?.contact?.resumePdfPublicId ?? ""),
+        avatarUrl: body.contact?.avatarUrl !== undefined ? body.contact.avatarUrl.trim() : (existing?.contact?.avatarUrl ?? DEFAULT_PORTFOLIO_CONTENT.contact.avatarUrl),
+        avatarPublicId: body.contact?.avatarPublicId !== undefined ? body.contact.avatarPublicId : (existing?.contact?.avatarPublicId ?? ""),
+        dossierName: body.contact?.dossierName !== undefined ? body.contact.dossierName.trim() : (existing?.contact?.dossierName ?? DEFAULT_PORTFOLIO_CONTENT.contact.dossierName),
+        dossierRole: body.contact?.dossierRole !== undefined ? body.contact.dossierRole.trim() : (existing?.contact?.dossierRole ?? DEFAULT_PORTFOLIO_CONTENT.contact.dossierRole),
+        quickPrompts: Array.isArray(body.contact?.quickPrompts)
+          ? body.contact.quickPrompts.map((p: string) => String(p).trim()).filter(Boolean)
+          : (existing?.contact?.quickPrompts ?? DEFAULT_PORTFOLIO_CONTENT.contact.quickPrompts),
+      };
+    }
+
     if (body.experience !== undefined) {
       if (Array.isArray(body.experience)) {
         updatePayload.experience = body.experience.map((item: Record<string, unknown>, idx: number) => ({

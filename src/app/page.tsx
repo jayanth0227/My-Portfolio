@@ -14,6 +14,7 @@ import ExperienceTimeline from "@/components/ExperienceTimeline";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { MagneticCursor } from "@/components/ui/magnetic-cursor";
 import Contact from "@/components/Contact";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -78,11 +79,11 @@ export default function Home() {
         {/* 4th Section: Skills (Part 2 - Parallax Showcase Gallery of 30 Skills) */}
         <Skiper30 />
 
-        {/* 5th & 6th Section: Unified Projects & Work Experience Section with Continuous Striped Pattern */}
+        {/* 5th, 6th & 7th Section: Unified Projects, Work Experience & Contact Section with Continuous Striped Pattern */}
         <section
           className="relative w-full overflow-hidden bg-[var(--background)] selection:bg-amber-500/20 selection:text-amber-600 dark:selection:text-amber-400"
         >
-          {/* Continuous Interactive Striped Pattern Canvas spanning both Projects & Experience */}
+          {/* Continuous Interactive Striped Pattern Canvas spanning Projects, Experience & Contact */}
           <StripedPattern
             spacing={38}
             strokeDasharray="4 2"
@@ -90,9 +91,10 @@ export default function Home() {
 
           {/* Continuous Luminous Ambient Glowing Background */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden select-none">
-            <div className="absolute top-[6%] left-1/2 -translate-x-1/2 h-[650px] w-[900px] rounded-full bg-gradient-to-b from-amber-500/10 via-yellow-500/5 to-transparent blur-3xl opacity-75 dark:opacity-30" />
-            <div className="absolute top-[45%] right-[4%] h-[550px] w-[550px] rounded-full bg-amber-500/5 blur-3xl" />
-            <div className="absolute bottom-[5%] left-[4%] h-[600px] w-[700px] rounded-full bg-gradient-to-b from-amber-500/10 via-yellow-500/5 to-transparent blur-3xl opacity-60 dark:opacity-25" />
+            <div className="absolute top-[4%] left-1/2 -translate-x-1/2 h-[650px] w-[900px] rounded-full bg-gradient-to-b from-amber-500/10 via-yellow-500/5 to-transparent blur-3xl opacity-75 dark:opacity-30" />
+            <div className="absolute top-[35%] right-[4%] h-[550px] w-[550px] rounded-full bg-amber-500/5 blur-3xl" />
+            <div className="absolute top-[65%] left-[4%] h-[600px] w-[700px] rounded-full bg-gradient-to-b from-amber-500/10 via-yellow-500/5 to-transparent blur-3xl opacity-60 dark:opacity-25" />
+            <div className="absolute bottom-[3%] right-[8%] h-[500px] w-[600px] rounded-full bg-amber-500/5 blur-3xl" />
           </div>
 
           {/* Projects Anchor & Content */}
@@ -107,10 +109,18 @@ export default function Home() {
           {/* Experience Timeline Anchor & Content */}
           <div id="experience" className="scroll-mt-20" />
           <ExperienceTimeline />
+
+          {/* Subtle Seamless Dividing Accent between Experience & Contact */}
+          <div className="relative z-10 max-w-5xl mx-auto my-4 sm:my-8 px-6">
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-500/20 dark:via-amber-400/15 to-transparent" />
+          </div>
+
+          {/* Contact Section — continues inside the striped pattern */}
+          <Contact />
         </section>
 
-        {/* 7th Section: Interactive Contact Section with MagicUI iPhone */}
-        <Contact />
+        {/* 8th Component: Solid Professional Footer */}
+        <Footer />
 
         {/* Quick Action: Smooth Scroll to Top Button */}
         <ScrollToTop />
