@@ -99,7 +99,7 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Dashboard Data State
-  const [activeTab, setActiveTab] = useState<"content" | "about" | "experience" | "contact" | "messages" | "projects">("content");
+  const [activeTab, setActiveTab] = useState<"content" | "about" | "experience" | "contact" | "projects">("content");
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [fetchingData, setFetchingData] = useState(false);
@@ -844,6 +844,11 @@ export default function AdminPage() {
         heroResumePdfPublicId: res.publicId,
       };
       setContentForm(updated);
+      setContactForm((prev) => ({
+        ...prev,
+        resumePdfUrl: res.url,
+        resumePdfPublicId: res.publicId,
+      }));
 
       // Auto-persist immediately to MongoDB
       const saveRes = await fetch("/api/admin/content", {
@@ -861,6 +866,15 @@ export default function AdminPage() {
             resumePdfPublicId: updated.heroResumePdfPublicId,
             contactButtonText: updated.heroContactButtonText,
             resumeButtonText: updated.heroResumeButtonText,
+          },
+          contact: {
+            ...contactForm,
+            resumePdfUrl: res.url,
+            resumePdfPublicId: res.publicId,
+            quickPrompts: contactForm.quickPromptsInput
+              .split(",")
+              .map((p) => p.trim())
+              .filter(Boolean),
           },
         }),
       });
@@ -1126,6 +1140,11 @@ export default function AdminPage() {
         resumePdfPublicId: res.publicId,
       };
       setContactForm(updated);
+      setContentForm((prev) => ({
+        ...prev,
+        heroResumePdfUrl: res.url,
+        heroResumePdfPublicId: res.publicId,
+      }));
 
       const quickPrompts = updated.quickPromptsInput
         .split(",")
@@ -1137,6 +1156,11 @@ export default function AdminPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          hero: {
+            ...contentForm,
+            resumePdfUrl: res.url,
+            resumePdfPublicId: res.publicId,
+          },
           contact: {
             ...updated,
             quickPrompts,
@@ -1452,13 +1476,13 @@ export default function AdminPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] shadow-xs flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] sm:text-xs uppercase tracking-wider text-[var(--muted-fg)] font-medium">Inquiries</p>
+                    <p className="text-[11px] sm:text-xs uppercase tracking-wider text-[var(--muted-fg)] font-medium">CMS Modules</p>
                     <p className="text-xl sm:text-3xl font-extrabold text-[var(--foreground)] mt-1">
-                      {messages.length}
+                      5 Active
                     </p>
                   </div>
                   <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                    <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <Layers className="h-4 w-4 sm:h-5 sm:w-5" />
                   </div>
                 </div>
 
@@ -1547,24 +1571,15 @@ export default function AdminPage() {
                   <span>Contact Module CMS</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab("messages")}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                    activeTab === "messages"
-                      ? "bg-amber-500 text-zinc-950 shadow-xs"
-                      : "text-[var(--muted-fg)] hover:text-[var(--foreground)] hover:bg-[var(--muted)]"
-                  }`}
-                >
-                  Contact Messages ({messages.length})
-                </button>
-                <button
                   onClick={() => setActiveTab("projects")}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                     activeTab === "projects"
                       ? "bg-amber-500 text-zinc-950 shadow-xs"
                       : "text-[var(--muted-fg)] hover:text-[var(--foreground)] hover:bg-[var(--muted)]"
                   }`}
                 >
-                  Portfolio Projects ({projects.length})
+                  <FolderGit2 className="h-3.5 w-3.5" />
+                  <span>Portfolio Projects ({projects.length})</span>
                 </button>
               </div>
 
@@ -3154,9 +3169,9 @@ export default function AdminPage() {
                                 )}
                                 {contactForm.resumePdfUrl && (
                                   <a
-                                    href={contactForm.resumePdfUrl}
+                                    href="/api/resume"
                                     target="_blank"
-                                    rel="noreferrer"
+                                    rel="noopener noreferrer"
                                     className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:underline"
                                   >
                                     <span>Preview</span>
@@ -3575,47 +3590,6 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Tab: Messages */}
-              {activeTab === "messages" && (
-                <div className="space-y-3">
-                  {messages.length === 0 ? (
-                    <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-[var(--border)] text-[var(--muted-fg)]">
-                      <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm font-medium">No contact inquiries yet.</p>
-                      <p className="text-xs text-[var(--muted-fg)] mt-1">
-                        Messages sent through the portfolio contact form will appear here.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3">
-                      {messages.map((msg) => (
-                        <div
-                          key={msg._id}
-                          className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--card-bg)] hover:border-amber-500/40 transition-colors shadow-xs space-y-2"
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-[var(--muted-fg)]">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-sm text-[var(--foreground)]">{msg.name}</span>
-                              <span className="font-mono text-xs">({msg.email})</span>
-                            </div>
-                            <span className="text-[11px] text-[var(--muted-fg)]">
-                              {new Date(msg.createdAt).toLocaleString()}
-                            </span>
-                          </div>
-                          {msg.subject && (
-                            <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                              Subject: {msg.subject}
-                            </p>
-                          )}
-                          <p className="text-xs sm:text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">
-                            {msg.message}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Tab: Projects */}
               {activeTab === "projects" && (

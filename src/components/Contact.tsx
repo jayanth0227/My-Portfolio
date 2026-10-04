@@ -82,7 +82,7 @@ export default function Contact() {
   const githubUrl = contact.githubUrl || "https://github.com/jayanthsaichikkala";
   const instagramUrl = contact.instagramUrl || "https://www.instagram.com/";
   const whatsappMessage = contact.whatsappMessage || "Hi Jayanth, I saw your portfolio!";
-  const resumeUrl = contact.resumePdfUrl || hero.resumePdfUrl || "/api/resume";
+  const resumeUrl = "/api/resume";
   const contactAvatar = contact.avatarUrl || hero.avatarUrl || "/profile.png";
   const quickPrompts = contact.quickPrompts && contact.quickPrompts.length > 0 ? contact.quickPrompts : QUICK_PROMPTS;
 
@@ -380,22 +380,22 @@ export default function Contact() {
                   </div>
 
                   {/* BOTTOM: Modern Dock Component as Bottom Nav Bar */}
-                  <div className="relative z-20 w-full flex flex-col items-center justify-center shrink-0 pt-0.5 pb-0.5">
+                  <div className="relative z-20 w-full flex flex-col items-center justify-center shrink-0 pt-1 pb-1">
                     <Dock
-                      baseSize={44}
-                      distance={80}
-                      gap={8}
-                      magnification={1.22}
+                      baseSize={50}
+                      distance={90}
+                      gap={16}
+                      magnification={1.16}
                       reserveSpace={false}
-                      className="p-0"
-                      panelClassName="bg-white/80 dark:bg-zinc-900/85 border border-white/60 dark:border-white/15 shadow-[0_8px_30px_rgba(0,0,0,0.18)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] backdrop-blur-2xl"
+                      className="p-0 w-full flex justify-center"
+                      panelClassName="bg-white/85 dark:bg-zinc-900/90 border border-white/60 dark:border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.18)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.55)] backdrop-blur-2xl rounded-[24px]"
                       items={dockItems}
                     />
                   </div>
 
                   {/* iOS Home Bottom Bar Indicator */}
-                  <div className="w-full flex justify-center pb-0.5 select-none pointer-events-none shrink-0">
-                    <div className="h-1 w-24 rounded-full bg-zinc-400/80 dark:bg-zinc-500/80" />
+                  <div className="w-full flex justify-center pb-1 select-none pointer-events-none shrink-0">
+                    <div className="h-1 w-28 rounded-full bg-zinc-400/80 dark:bg-zinc-500/80" />
                   </div>
                 </div>
               </Iphone>

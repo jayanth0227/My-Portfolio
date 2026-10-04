@@ -62,7 +62,8 @@ export async function PUT(request: Request) {
 
     const existing = (await PortfolioContent.findOne({ key: "home" }).lean()) || (await PortfolioContent.findOne({}).lean());
 
-    const updatePayload: Record<string, unknown> = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updatePayload: Record<string, any> = {
       key: "home",
     };
 
@@ -148,6 +149,21 @@ export async function PUT(request: Request) {
       };
     }
 
+    // Sync resume URL/PublicId across hero & contact sections if updated in either
+    if (body.hero?.resumePdfUrl && !body.contact?.resumePdfUrl && updatePayload.hero) {
+      if (!updatePayload.contact) {
+        updatePayload.contact = { ...(existing?.contact || DEFAULT_PORTFOLIO_CONTENT.contact) };
+      }
+      updatePayload.contact.resumePdfUrl = updatePayload.hero.resumePdfUrl;
+      updatePayload.contact.resumePdfPublicId = updatePayload.hero.resumePdfPublicId;
+    } else if (body.contact?.resumePdfUrl && !body.hero?.resumePdfUrl && updatePayload.contact) {
+      if (!updatePayload.hero) {
+        updatePayload.hero = { ...(existing?.hero || DEFAULT_PORTFOLIO_CONTENT.hero) };
+      }
+      updatePayload.hero.resumePdfUrl = updatePayload.contact.resumePdfUrl;
+      updatePayload.hero.resumePdfPublicId = updatePayload.contact.resumePdfPublicId;
+    }
+
     if (body.experience !== undefined) {
       if (Array.isArray(body.experience)) {
         updatePayload.experience = body.experience.map((item: Record<string, unknown>, idx: number) => ({
@@ -173,7 +189,7 @@ export async function PUT(request: Request) {
     const updated = await PortfolioContent.findOneAndUpdate(
       { key: "home" },
       { $set: updatePayload },
-      { upsert: true, new: true, runValidators: true }
+      { upsert: true, returnDocument: 'after', runValidators: true }
     );
 
     return NextResponse.json(

@@ -23,7 +23,8 @@ export async function POST(request: Request) {
 
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      const mime = file.type || "image/jpeg";
+      const isPdfFile = (file.name && file.name.toLowerCase().endsWith(".pdf")) || file.type === "application/pdf" || folder.includes("resumes");
+      const mime = isPdfFile ? "application/pdf" : (file.type || "image/jpeg");
       fileDataUri = `data:${mime};base64,${buffer.toString("base64")}`;
     } else {
       return NextResponse.json(
